@@ -1,4 +1,3 @@
-
 // src/components/AICallingView.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { PhoneIncoming, PhoneOutgoing, Phone, Plus, Filter, ArrowUpDown, X, FileText } from 'lucide-react';
@@ -327,110 +326,76 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
                   <Calendar className="w-6 h-6 text-purple-400" />
                   <span className="text-green-400 text-sm">+15%</span>
                 </div>
-                <h3 className={`text-sm ${theme === 'dark' ? 'text-gray-400' :: 'text-gray-600'}`}>Conversion Rate</h3>
-                <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>23%</p>
-              </div>
-            </AnimatedCard>
-          </div>
+                <h3 className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Conversion Rate</h3>
+                <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>23%</p>
+              </div>
+            </AnimatedCard>
+          </div>
 
-          {/* Call Status Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Incoming Calls */}
-            <AnimatedCard delay={0.5}>
-              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-lg p-6 border`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <PhoneIncoming className="w-5 h-5 text-green-400" />
-                    <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Incoming Calls</h3>
-                  </div>
-                  {/*  Filtering and sorting are currently not implemented in this example */}
-                  {/* <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setFilterOpen(!filterOpen)}
-                      className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
-                    >
-                      <Filter className="w-4 h-4 text-gray-400" />
-                    </button>
-                    <button className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors">
-                      <ArrowUpDown className="w-4 h-4 text-gray-400" />
-                    </button>
-                  </div> */}
-                </div>
-                <div className="space-y-4">
-                {/* Placeholder data. Replace with dynamic data. */}
-                  <CallItem
-                    name="Sarah Johnson"
-                    number="+1 (555) 234-5678"
-                    time="2 minutes ago"
-                    status="completed"
-                    type="incoming"
-                    theme={theme}
-                  />
-                  <CallItem
-                    name="Mike Wilson"
-                    number="+1 (555) 876-5432"
-                    time="15 minutes ago"
-                    status="missed"
-                    type="incoming"
-                    theme={theme}
-                  />
-                </div>
-              </div>
-            </AnimatedCard>
+          {/* Call Status Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Incoming Calls */}
+            <AnimatedCard delay={0.5}>
+              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-lg p-6 border`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <PhoneIncoming className="w-5 h-5 text-green-400" />
+                    <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Incoming Calls</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => setFilterOpen(!filterOpen)}
+                      className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
+                    >
+                      <Filter className="w-4 h-4 text-gray-400" />
+                    </button>
+                    <button className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors">
+                      <ArrowUpDown className="w-4 h-4 text-gray-400" />
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                    {/*Placeholder data*/}
+                </div>
+              </div>
+            </AnimatedCard>
 
-            {/* Outgoing Calls */}
-            <AnimatedCard delay={0.6}>
-              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-lg p-6 border`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <PhoneOutgoing className="w-5 h-5 text-blue-400" />
-                    <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Outgoing Calls</h3>
-                  </div>
-                   {/* Filtering and sorting are currently not implemented in this example */}
-                  {/* <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setFilterOpen(!filterOpen)}
-                      className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
-                    >
-                      <Filter className="w-4 h-4 text-gray-400" />
-                    </button>
-                    <button className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors">
-                      <ArrowUpDown className="w-4 h-4 text-gray-400" />
-                    </button>
-                  </div> */}
-                </div>
-                <div className="space-y-4">
-                {/* Placeholder data. Replace with dynamic data. */}
-                  <CallItem
-                    name="Robert Brown"
-                    number="+1 (555) 345-6789"
-                    time="5 minutes ago"
-                    status="completed"
-                    type="outgoing"
-                    theme={theme}
-                  />
-                  <CallItem
-                    name="Emily Davis"
-                    number="+1 (555) 987-1234"
-                    time="30 minutes ago"
-                    status="no_answer"
-                    type="outgoing"
-                    theme={theme}
-                  />
-                </div>
-              </div>
-            </AnimatedCard>
-          </div>
-        </>
-      ) : (
-        //  Implement CallReportView component to show call reports.
-        <div>Call Reports (Placeholder)</div>
-      )}
+            {/* Outgoing Calls */}
+            <AnimatedCard delay={0.6}>
+              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-lg p-6 border`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <PhoneOutgoing className="w-5 h-5 text-blue-400" />
+                    <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Outgoing Calls</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => setFilterOpen(!filterOpen)}
+                      className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
+                    >
+                      <Filter className="w-4 h-4 text-gray-400" />
+                    </button>
+                    <button className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors">
+                      <ArrowUpDown className="w-4 h-4 text-gray-400" />
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                    {/*Placeholder data*/}
+                </div>
+              </div>
+            </AnimatedCard>
+          </div>
+        </>
+      ) : (
+       //  Implement CallReportView component to show call reports.
+        <div> Call Reports </div>
+      )}
 
       <ScheduleCallModal
         isOpen={showScheduleModal}
         onClose={() => setShowScheduleModal(false)}
-        onCallScheduled={handleCallScheduled} // Add this prop
+        onCallScheduled={handleCallScheduled}
         leads={leads}
         theme={theme}
       />

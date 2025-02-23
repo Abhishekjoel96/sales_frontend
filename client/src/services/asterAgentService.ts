@@ -1,4 +1,3 @@
-
 // backend/src/services/masterAgentService.ts
 import { getLeads, Lead } from '../models/Lead';
 import { getCallLogs, CallLog } from '../models/CallLog';

@@ -5,6 +5,7 @@ import * as messageService from '../../services/messageService'; // Import messa
 import { AppContext } from '../../contexts/AppContext';  // Assuming you'll use context
 import { Message } from '../../models/Message'; // Import Message interface from backend models
 import { Lead } from '../../models/Lead';
+import { io, Socket } from 'socket.io-client';
 
 
 interface EmailViewProps {
@@ -144,6 +145,7 @@ export function EmailView({ theme, leads }: EmailViewProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showAIPopup, setShowAIPopup] = useState(false);
+    const [socket, setSocket] = useState<Socket | null>(null);
 
      const fetchEmails = useCallback(async () => {
         try {
@@ -162,13 +164,14 @@ export function EmailView({ theme, leads }: EmailViewProps) {
       useEffect(() => {
         fetchEmails();
           // Set up WebSocket connection
-        const socket = io('http://localhost:3001'); // Replace with your backend URL
+        const newSocket = io('http://localhost:3001');
+        setSocket(newSocket) // Replace with your backend URL
 
-        socket.on('connect', () => {
+        newSocket.on('connect', () => {
           console.log('Connected to WebSocket');
         });
 
-         socket.on('message_received', (newMessage: Message) => {
+         newSocket.on('message_received', (newMessage: Message) => {
             // Update the messages list *only* if it's an email.
             if (newMessage.channel === 'Email') {
                 setEmails(prevEmails => [...prevEmails, newMessage]);
@@ -176,7 +179,7 @@ export function EmailView({ theme, leads }: EmailViewProps) {
         });
 
         return () => {
-          socket.disconnect();
+          newSocket.disconnect();
         };
     }, [fetchEmails]);
 
@@ -340,7 +343,7 @@ export function EmailView({ theme, leads }: EmailViewProps) {
                                         theme === 'dark'
                                             ? 'bg-gray-700 border-gray-600 text-white'
                                             : 'bg-gray-50 border-gray-300 text-gray-900'
-                                    } border rounded-lg focus:outline-none focus:border-red-500`}
+                                    } border rounded-lg focus:outline-none focus:border-red-500
                                     placeholder="Ask about the data in the chat box..."
                                 />
                             </div>
@@ -350,3 +353,8 @@ export function EmailView({ theme, leads }: EmailViewProps) {
                         </div>
                     </div>
                 </div>
+            )}
+        </div>
+    );
+}
+

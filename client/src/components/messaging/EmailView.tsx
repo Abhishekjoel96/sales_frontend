@@ -1,3 +1,4 @@
+
 // src/components/messaging/EmailView.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Mail, Star, Trash2, Reply, Forward, X, Bot } from 'lucide-react';
@@ -164,8 +165,8 @@ export function EmailView({ theme, leads }: EmailViewProps) {
       useEffect(() => {
         fetchEmails();
           // Set up WebSocket connection
-        const newSocket = io('http://localhost:3001');
-        setSocket(newSocket) // Replace with your backend URL
+        const newSocket = io('http://localhost:3001'); // Replace with your backend URL
+        setSocket(newSocket)
 
         newSocket.on('connect', () => {
           console.log('Connected to WebSocket');
@@ -343,7 +344,7 @@ export function EmailView({ theme, leads }: EmailViewProps) {
                                         theme === 'dark'
                                             ? 'bg-gray-700 border-gray-600 text-white'
                                             : 'bg-gray-50 border-gray-300 text-gray-900'
-                                    } border rounded-lg focus:outline-none focus:border-red-500
+                                    } border rounded-lg focus:outline-none focus:border-red-500`}
                                     placeholder="Ask about the data in the chat box..."
                                 />
                             </div>
@@ -357,4 +358,3 @@ export function EmailView({ theme, leads }: EmailViewProps) {
         </div>
     );
 }
-

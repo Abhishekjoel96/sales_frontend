@@ -6,6 +6,7 @@ import { Appointment } from '../models/Appointment';
 import { CallLog } from '../models/CallLog';
 import { Message } from '../models/Message';
 import { AISettings } from '../models/AISettings';
+import { AppContext } from '../../contexts/AppContext';
 
 interface AppContextType {
     leads: Lead[];

@@ -80,7 +80,7 @@ class OpenAIService {
           if(!response) {
             throw new Error("Couldn't get twilio context")
           }
-          let twiml = `<Response><Say><span class="math-inline">\{response\}</Say\><Gather numDigits\="1" action\="/twiml?step\=language&amp;language\=</span>{language}" method="POST">`;
+          let twiml = `<Response><Say>${response}</Say><Gather numDigits="1" action="/twiml?step=language&amp;language=${language}" method="POST">`;
 
         if (language === 'en-US') {
           twiml += '<Say>Press 1 for English, 2 for French, 3 for German, 4 for Spanish, 5 for Italian.</Say></Gather>';
@@ -161,4 +161,23 @@ class OpenAIService {
       return response;
     } catch (error:any) {
       logger.error('Error generating response', error);
-      throw
+      throw new Error('Failed to generate AI response: '+ error.message);
+
+    }
+  }
+
+  async getEmbedding(text: string): Promise<number[]> {
+    try{
+      const response = await this.openai.embeddings.create({
+        input: text,
+        model: 'text-embedding-ada-002',
+      })
+      return response.data[0].embedding;
+    } catch(error: any){
+      logger.error('Error in generating embeddings', error);
+      throw new Error('Failed to generate embedding:'+ error.message);
+    }
+  }
+}
+
+export default new OpenAIService();

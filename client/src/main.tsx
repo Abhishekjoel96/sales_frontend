@@ -2,7 +2,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import './styles.css'; // Import global styles (Tailwind)
+import './styles.css';
 import { AppProvider } from './contexts/AppContext';
 
 const rootElement = document.getElementById('root');
@@ -14,7 +14,7 @@ if (!rootElement) {
 const root = createRoot(rootElement);
 
 root.render(
-      <AppProvider>
-        <App />
-      </AppProvider>
+        <AppProvider>
+            <App />
+        </AppProvider>
 );

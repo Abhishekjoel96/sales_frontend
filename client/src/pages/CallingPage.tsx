@@ -4,8 +4,8 @@ import { AICallingView } from '../components/AICallingView';
 import { useApp } from '../contexts/AppContext';
 
 const CallingPage: React.FC = () => {
-  const { theme, leads} = useApp();
-  return <AICallingView theme={theme} leads={leads}/>;
+    const { theme, leads } = useApp();
+    return <AICallingView theme={theme} leads={leads}/>;
 };
 
 export default CallingPage;

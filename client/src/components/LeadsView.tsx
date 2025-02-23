@@ -1,13 +1,13 @@
 // src/components/LeadsView.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, UserPlus, Filter, ArrowUpDown, Pencil, Trash2, X, Check } from 'lucide-react';
+import { UserPlus, Search, Filter, ArrowUpDown, Pencil, Trash2, X, Check } from 'lucide-react';
 import * as leadService from '../services/leadService';
 import { Lead } from '../models/Lead';
-import { useDebounce } from '../hooks/useDebounce'; // Import the debounce hook
-
+import { useDebounce } from '../hooks/useDebounce';
 
 interface LeadsViewProps {
     theme: 'dark' | 'light';
+    leads: Lead[];
 }
 
 interface EditableFieldProps {
@@ -18,7 +18,7 @@ interface EditableFieldProps {
     type?: string;
     onClick?: () => void;
 }
-//Editable Fields
+
 function EditableField({ value, isEditing, onEdit, theme, type = 'text', onClick }: EditableFieldProps) {
     const [editValue, setEditValue] = useState(value || '');
 
@@ -29,7 +29,6 @@ function EditableField({ value, isEditing, onEdit, theme, type = 'text', onClick
 
     const handleBlur = () => {
         onEdit(editValue);
-
     }
 
     if (!isEditing) {
@@ -51,25 +50,25 @@ function EditableField({ value, isEditing, onEdit, theme, type = 'text', onClick
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={handleBlur}
-            onKeyDown={(e) => { if (e.key === 'Enter') { handleBlur() } }}
+            onKeyDown={(e) => {if(e.key === 'Enter') {handleBlur()}}}
             autoFocus
             className={`w-full px-2 py-1 text-sm ${
                 theme === 'dark'
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-gray-50 border-gray-300 text-gray-900'
-                } border rounded focus:outline-none focus:border-indigo-500`}
+            } border rounded focus:outline-none focus:border-indigo-500`}
         />
     );
 }
 
-export function LeadsView({ theme }: LeadsViewProps) {
+export function LeadsView({ theme, leads: initialLeads }: LeadsViewProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [editingCell, setEditingCell] = useState<{ leadId: string; field: keyof Lead } | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [filterStatus, setFilterStatus] = useState<string | null>(null);
+     const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [sortField, setSortField] = useState<keyof Lead | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [newLead, setNewLead] = useState<Omit<Lead, 'id' | 'created_at' | 'updated_at'>>({
@@ -84,7 +83,6 @@ export function LeadsView({ theme }: LeadsViewProps) {
     });
 
     const debouncedSearchQuery = useDebounce(searchQuery, 300); // 300ms debounce
-
 
      const fetchLeads = useCallback(async () => {
         try {
@@ -185,11 +183,11 @@ export function LeadsView({ theme }: LeadsViewProps) {
     const getStatusIcon = (status: Lead['status']) => {
       switch (status) {
         case 'Hot':
-          return <Flame className="w-4 h-4 text-red-400" />;
+          return <i className="fa-solid fa-fire" style={{color: "#f15704"}}></i>
         case 'Warm':
-            return <TrendingUp className="w-4 h-4 text-yellow-400" />;
+            return <i className="fa-solid fa-temperature-half" style={{color: "#f59209"}}></i>
         case 'Cold':
-          return <Snowflake className="w-4 h-4 text-blue-400" />;
+          return <i className="fa-solid fa-snowflake" style={{color: "#0dcaf0"}}></i>
         default:
           return null;
       }
@@ -203,6 +201,8 @@ export function LeadsView({ theme }: LeadsViewProps) {
                 return 'bg-yellow-400/20 text-yellow-400';
             case 'Cold':
                 return 'bg-blue-400/20 text-blue-400';
+             case 'New':
+                 return 'bg-gray-400/20 text-gray-400';
             default:
                 return '';
         }
@@ -222,7 +222,8 @@ export function LeadsView({ theme }: LeadsViewProps) {
                 <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Leads</h2>
                 <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Manage and track your leads</p>
             </header>
-             {/* Quick Access Bar */}
+
+            {/* Quick Access Bar */}
             <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-lg p-4 mb-6 border flex items-center justify-between gap-4`}>
                 <div className="flex items-center gap-4">
                 <button
@@ -261,7 +262,7 @@ export function LeadsView({ theme }: LeadsViewProps) {
                         setSortDirection('asc');
                       }
                  }}>
-                    <SortAsc className="w-5 h-5 text-gray-400" />
+                    <ArrowUpDown className="w-5 h-5 text-gray-400" />
                 </button>
 
                 </div>
@@ -342,15 +343,16 @@ export function LeadsView({ theme }: LeadsViewProps) {
                                                 value={lead.status}
                                                 onChange={(e) => handleCellEdit(lead.id, 'status', e.target.value as Lead['status'])}
                                                 className={`px-2 py-1 text-sm ${
-                                                    theme === 'dark'? 'bg-gray-700 border-gray-600 text-white'
-                                                    : 'bg-gray-50 border-gray-300 text-gray-900'
+                                                    theme === 'dark'
+                                                        ? 'bg-gray-700 border-gray-600 text-white'
+                                                        : 'bg-gray-50 border-gray-300 text-gray-900'
                                                 } border rounded focus:outline-none focus:border-indigo-500`}
                                                 autoFocus
                                             >
-                                                <option value="Hot">Hot</option>
-                                                <option value="Warm">Warm</option>
-                                                <option value="Cold">Cold</option>
                                                 <option value="New">New</option>
+                                                <option value="Cold">Cold</option>
+                                                <option value="Warm">Warm</option>
+                                                <option value="Hot">Hot</option>
                                             </select>
                                         ) : (
                                             <span
@@ -389,13 +391,9 @@ export function LeadsView({ theme }: LeadsViewProps) {
                                     <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">
                                         <Calendar className="w-4 h-4 text-gray-400" />
-                                        <EditableField
-                                            value={lead.lastContact}
-                                            isEditing={editingCell?.leadId === lead.id && editingCell?.field === 'lastContact'}
-                                            onEdit={(value) => handleCellEdit(lead.id, 'lastContact', value)}
-                                            theme={theme}
-                                            onClick={() => setEditingCell({ leadId: lead.id, field: 'lastContact' })}
-                                        />
+                                        <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                                            {lead.created_at}
+                                        </span>
                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -415,7 +413,7 @@ export function LeadsView({ theme }: LeadsViewProps) {
 
             {/* Add Lead Modal */}
             {showAddModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
                     <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl p-6 w-full max-w-md`}>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Add New Lead</h3>
@@ -526,7 +524,7 @@ export function LeadsView({ theme }: LeadsViewProps) {
                 <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Industry</label>
                 <input
                   type="text"
-                  value={newLead.industry || ''}
+                  value={newLead.industry|| ''}
                   onChange={(e) => setNewLead({ ...newLead, industry: e.target.value })}
                   className={`w-full px-3 py-2 ${
                     theme === 'dark'

@@ -1,6 +1,6 @@
-// src/components/messaging/Chat.tsx
+//src/components/messaging/Chat.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Smile, Paperclip } from 'lucide-react';
+import { Send, Smile, Paperclip } from 'lucide-react';  //Removed MoreVertical
 import { Message } from '../../models/Message';
 
 interface ChatProps {
@@ -31,7 +31,7 @@ function Chat({ contact, messages, onSendMessage, theme }: ChatProps) {
 
   const handleSend = () => {
     if (message.trim()) {
-      onSendMessage(message, contact.id, 'WhatsApp'); // Assuming 'WhatsApp' for this example
+      onSendMessage(message, contact.id, 'WhatsApp'); // Now correctly passing leadId and channel
       setMessage('');
     }
   };
@@ -73,7 +73,7 @@ function Chat({ contact, messages, onSendMessage, theme }: ChatProps) {
             </div>
           </div>
         ))}
-        <div ref={messagesEndRef} /> {/* Invisible element at the end of messages */}
+        <div ref={messagesEndRef} /> {/* Invisible element at the end of messages (for auto-scroll) */}
       </div>
 
       {/* Message Input */}
@@ -82,11 +82,12 @@ function Chat({ contact, messages, onSendMessage, theme }: ChatProps) {
           <button className={`p-2 rounded-full ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
             <Smile className="w-6 h-6 text-gray-400" />
           </button>
+          {/* Remove the attachment option if it's SMSView*/}
           {/*
           <button className={`p-2 rounded-full ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
             <Paperclip className="w-6 h-6 text-gray-400" />
           </button>
-          */}
+            */}
           <input
             type="text"
             value={message}
@@ -98,11 +99,10 @@ function Chat({ contact, messages, onSendMessage, theme }: ChatProps) {
                 : 'bg-gray-100 text-gray-900 placeholder-gray-500'
             } rounded-lg focus:outline-none`}
             onKeyDown={(e) => {
-                if(e.key === 'Enter' && message.trim()){
-                    onSendMessage(message, contact.id, 'SMS'); // Send leadId and channel
-                    setMessage('');
+                if (e.key === 'Enter' && message.trim()) {
+                  handleSend();
                 }
-            }}
+              }}
           />
           <button
             onClick={handleSend}
@@ -121,5 +121,3 @@ function Chat({ contact, messages, onSendMessage, theme }: ChatProps) {
     </div>
   );
 }
-
-export default Chat;

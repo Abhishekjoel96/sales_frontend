@@ -3,8 +3,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 interface PageTransitionProps {
-  children: React.ReactNode;
-  key: string | number; // Add key prop
+    children: React.ReactNode;
+    key: string | number; // Add key prop
 }
 
 // Use a wrapper component

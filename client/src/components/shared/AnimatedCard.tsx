@@ -1,4 +1,4 @@
-// src/components/shared/AnimatedCard.tsx
+//src/components/shared/AnimatedCard.tsx
 import { motion } from 'framer-motion';
 import React from 'react';
 

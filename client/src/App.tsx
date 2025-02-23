@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
 import {
     Users,
@@ -9,7 +9,10 @@ import {
     Calendar,
     Sparkles,
     BarChart3,
-    Settings
+    Settings,
+    UserPlus,
+    MessagesSquare,
+    FileText
 } from 'lucide-react';
 import { AppProvider } from './contexts/AppContext';
 import { PageTransition } from './components/shared/PageTransition';
@@ -20,8 +23,9 @@ const LeadsPage = React.lazy(() => import('./pages/LeadsPage'));
 const CallingPage = React.lazy(() => import('./pages/CallingPage'));
 const CalendarPage = React.lazy(() => import('./pages/CalendarPage'));
 const MessagingPage = React.lazy(() => import('./pages/MessagingPage'));
-const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage')); // Assuming a settings page
 const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage'));
+const ReportsPage = React.lazy(() => import('./pages/ReportsPage'));
 
 const routes = [
     { path: "/", component: DashboardPage, name: "Dashboard", icon: <Users /> },
@@ -30,6 +34,7 @@ const routes = [
     { path: "/calendar", component: CalendarPage, name: "Calendar", icon: <Calendar /> },
     { path: "/messaging", component: MessagingPage, name: "Messaging", icon: <MessageCircle /> },
     { path: "/analytics", component: AnalyticsPage, name: "Analytics", icon: <BarChart3 /> },
+    {path: "/reports", component: ReportsPage, name: "Reports", icon: <FileText />},
     { path: "/settings", component: SettingsPage, name: "Settings", icon: <Settings /> }, // Assuming a settings page
 ];
 
@@ -86,7 +91,7 @@ function App() {
                       <Suspense fallback={<div>Loading...</div>}>
                         <Routes>
                             {routes.map((route) => (
-                                <Route key={route.path} path={route.path} element={<PageTransition><route.component /></PageTransition>} />
+                                <Route key={route.path} path={route.path} element={<PageTransition key={route.path}><route.component /></PageTransition>} />
                             ))}
                         </Routes>
                       </Suspense>

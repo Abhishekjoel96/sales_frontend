@@ -1,0 +1,30 @@
+/* src/styles.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add any global styles here.  This is a good place for custom CSS variables, */
+/* especially if you want to support both light and dark themes. */
+
+:root {
+  --background-light: #ffffff;
+  --background-dark: #1f2937; /* Example dark background */
+  --text-light: #1f2937;
+  --text-dark: #e5e7eb;
+  --border-light: #e5e7eb;
+  --border-dark: #374151;
+  /* ... other light theme variables ... */
+}
+
+.dark {
+  --background: var(--background-dark);
+  --text: var(--text-dark);
+  --border: var(--border-dark);
+  /* ... other dark theme variables ... */
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* Tailwind default sans-serif stack */
+}

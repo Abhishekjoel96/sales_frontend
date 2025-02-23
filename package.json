@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
+    "dev": "cd client && vite"
+  }
+}

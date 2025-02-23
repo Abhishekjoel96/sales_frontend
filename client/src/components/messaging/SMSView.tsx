@@ -1,32 +1,30 @@
-// src/components/messaging/SMSView.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Bot, X, MessagesSquare } from 'lucide-react';
 import * as messageService from '../../services/messageService';
-import { AppContext } from '../../contexts/AppContext';
 import { Message } from '../../models/Message';
-import { Lead } from '../../models/Lead';
-import Chat from './Chat';  // Import the Chat component
+import { Lead } from '../../models/Lead'; // Import the Lead interface
+import Chat from './Chat';
 import { io } from 'socket.io-client';
 
 interface SMSViewProps {
     theme: 'dark' | 'light';
-    leads: Lead[]; // Get leads from props
+    leads: Lead[]; // Receive leads as a prop
 }
 
 export function SMSView({ theme, leads }: SMSViewProps) {
-    const [selectedContact, setSelectedContact] = useState<{ name: string; phone: string; id: string; } | null>(null);
+    const [selectedContact, setSelectedContact] = useState<{name: string, phone:string, id: string} | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [showAIPopup, setShowAIPopup] = useState(false);
-    const [loading, setLoading] = useState(false); // Add loading state
-    const [error, setError] = useState<string | null>(null); // Add error state
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [socket, setSocket] = useState<any>(null);
 
 
-    // Use useCallback to prevent unnecessary re-renders of fetchMessages
+    // useCallback to prevent unnecessary re-renders of fetchMessages
     const fetchMessages = useCallback(async (leadId: string) => {
         try {
             setLoading(true);
-            const fetchedMessages = await messageService.getMessagesByChannelAndLeadId(leadId, 'SMS');
+            const fetchedMessages = await messageService.getMessagesByChannelAndLeadId(leadId, 'SMS');  // Fetch only SMS messages
             setMessages(fetchedMessages);
             setError(null); // Clear any previous errors
         } catch (err: any) {
@@ -39,55 +37,57 @@ export function SMSView({ theme, leads }: SMSViewProps) {
     useEffect(() => {
         // Fetch messages for the selected contact when it changes
         if (selectedContact) {
-            fetchMessages(selectedContact.id);
+          fetchMessages(selectedContact.id);
         }
     }, [selectedContact, fetchMessages]);
 
-    useEffect(() => {
-      const newSocket = io('http://localhost:3001'); // Replace with your backend URL
-      setSocket(newSocket);
-        // Set up WebSocket connection
+
+   useEffect(() => {
+     const newSocket = io('http://localhost:3001'); // Replace with your backend URL
+     setSocket(newSocket);
+       // Set up WebSocket connection
         newSocket.on('connect', () => {
             console.log('Connected to WebSocket');
-          });
+        });
 
-          newSocket.on('message_received', (newMessage: Message) => {
+        newSocket.on('message_received', (newMessage: Message) => {
             // Update the messages list *only* if it's an SMS and for the selected contact.
             if (newMessage.channel === 'SMS' && selectedContact && newMessage.lead_id === selectedContact.id) {
                 setMessages(prevMessages => [...prevMessages, newMessage]);
             }
         });
 
+
         return () => {
             newSocket.disconnect();
         };
-    }, [selectedContact]); // Depend on selectedContact
+    }, [selectedContact]); // Depend on selectedContact, so the effect runs when it changes
 
-    const handleSendMessage = async (text: string, leadId: string, channel: string) => {
-        try {
+     const handleSendMessage = async (text: string, leadId: string, channel: string) => {
+        try{
             await messageService.sendMessage(leadId, channel, text);
             // Fetch all the messages.
-            fetchMessages(leadId);
-        } catch (error: any) {
+            fetchMessages(leadId)
+        }
+        catch (error: any) {
             console.error("Error sending message:", error);
-            setError(error.message || 'Failed to send message');  // Update error state
+            setError(error.message || "Failed to send message")
         }
     };
 
     // Function to handle contact/conversation selection
-    const handleSelectContact = (lead: Lead) => {
+    const handleSelectContact = (lead : Lead) => {
       setSelectedContact({name: lead.name, phone: lead.phone_number, id: lead.id});
-      fetchMessages(lead.id); // Fetch messages when a contact is selected
+      fetchMessages(lead.id) // Fetch messages when a contact is selected
     }
 
     if (loading) {
-        return <div>Loading SMS conversations...</div>; // Display loading message
+        return <div>Loading conversations...</div>; // Display loading message
     }
 
     if (error) {
         return <div>Error: {error}</div>; // Display error message
     }
-
 
     return (
         <div className="h-[calc(100vh-2rem)] flex mt-16">
@@ -96,15 +96,15 @@ export function SMSView({ theme, leads }: SMSViewProps) {
                 theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             } border-b px-8 flex items-center justify-between z-10`}>
                 <div className="flex items-center gap-4">
-                <button
-                    onClick={() => setShowAIPopup(true)}
-                    className={`flex items-center gap-2 px-4 py-2 ${
-                    theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
-                    } rounded-lg hover:bg-opacity-80 transition-colors`}
-                >
-                    <Bot className="w-5 h-5 text-blue-400" />
-                    <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>AI Assistant</span>
-                </button>
+                    <button
+                         onClick={() => setShowAIPopup(true)}
+                        className={`flex items-center gap-2 px-4 py-2 ${
+                            theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+                        } rounded-lg hover:bg-opacity-80 transition-colors`}
+                    >
+                        <Bot className="w-5 h-5 text-blue-400" />
+                        <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>AI Assistant</span>
+                    </button>
                 </div>
             </div>
 
@@ -132,7 +132,7 @@ export function SMSView({ theme, leads }: SMSViewProps) {
                     </div>
                 </div>
 
-                 {/* Contacts - Map your leads to contacts */}
+                {/* Contacts - Map your leads to contacts*/}
                 <div className="overflow-y-auto">
                 {leads.map((lead) => (
                   <div
@@ -172,7 +172,7 @@ export function SMSView({ theme, leads }: SMSViewProps) {
 
             {/* Chat Area */}
             <div className="flex-1">
-                {selectedContact ? (
+            {selectedContact ? (
                     <Chat contact={selectedContact} messages={messages} onSendMessage={handleSendMessage} theme={theme} />
                 ) : (
                     <div className="flex items-center justify-center h-full">
@@ -182,8 +182,9 @@ export function SMSView({ theme, leads }: SMSViewProps) {
                     </div>
                 )}
             </div>
-            {/* AI Assistant Popup */}
-            {showAIPopup && (
+
+             {/* AI Assistant Popup */}
+             {showAIPopup && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl p-6 w-full max-w-md`}>
                         <div className="flex justify-between items-center mb-4">
@@ -210,7 +211,7 @@ export function SMSView({ theme, leads }: SMSViewProps) {
                                         theme === 'dark'
                                             ? 'bg-gray-700 border-gray-600 text-white'
                                             : 'bg-gray-50 border-gray-300 text-gray-900'
-                                    } border rounded-lg focus:outline-none focus:border-blue-500`}
+                                    } border rounded-lg focus:outline-none focus:border-red-500`}
                                     placeholder="Ask about the data in the chat box..."
                                 />
                             </div>

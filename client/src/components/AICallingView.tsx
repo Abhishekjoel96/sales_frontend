@@ -6,8 +6,8 @@ import { CallLog } from '../models/CallLog'; // Import CallLog
 import * as callService from '../services/callService'; // Import callService
 import { format } from 'date-fns';
 import { Lead } from '../models/Lead';
-import { useApp } from '../contexts/AppContext';
-import { /*...,*/ Clock, User, Calendar } from 'lucide-react';
+
+
 interface AICallingViewProps {
     theme: 'dark' | 'light';
     leads: Lead[]; // To select the leads.

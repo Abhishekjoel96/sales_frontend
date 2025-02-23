@@ -49,7 +49,7 @@ import {
   };
 
 
-// Centralized double-booking check
+  // Centralized double-booking check
 const checkDoubleBooking = async (leadId: string, dateTimeString: string, currentAppointmentId?: string) => {
     const appointments = await getAppointments();
 

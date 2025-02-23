@@ -1,6 +1,7 @@
 // src/App.tsx
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
+//Corrected imports
 import {
     Users,
     PhoneCall,
@@ -26,6 +27,7 @@ const MessagingPage = React.lazy(() => import('./pages/MessagingPage'));
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage')); // Assuming a settings page
 const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage'));
 const ReportsPage = React.lazy(() => import('./pages/ReportsPage'));
+
 
 const routes = [
     { path: "/", component: DashboardPage, name: "Dashboard", icon: <Users /> },
@@ -91,6 +93,7 @@ function App() {
                       <Suspense fallback={<div>Loading...</div>}>
                         <Routes>
                             {routes.map((route) => (
+                                // Added key prop here.
                                 <Route key={route.path} path={route.path} element={<PageTransition key={route.path}><route.component /></PageTransition>} />
                             ))}
                         </Routes>

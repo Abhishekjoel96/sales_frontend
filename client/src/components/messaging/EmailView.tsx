@@ -1,21 +1,17 @@
-
 // src/components/messaging/EmailView.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Mail, Star, Trash2, Reply, Forward, X, Bot } from 'lucide-react';
-import * as messageService from '../../services/messageService'; // Import message service
-import { AppContext } from '../../contexts/AppContext';  // Assuming you'll use context
-import { Message } from '../../models/Message'; // Import Message interface from backend models
+import * as messageService from '../../services/messageService';
+import { Message } from '../../models/Message';
 import { Lead } from '../../models/Lead';
-import { io, Socket } from 'socket.io-client';
-
+import { useApp } from '../../contexts/AppContext'; // Corrected import
 
 interface EmailViewProps {
     theme: 'dark' | 'light';
-    leads: Lead[]; // Get leads from props, for displaying names
+    leads: Lead[];
 }
 
-
-function EmailDetailView({ email, onReply, theme }: { email: Message | null; onReply: (content: string, leadId: string, channel:string) => void; theme: 'dark' | 'light' }) {
+function EmailDetailView({ email, onReply, theme }: { email: Message | null; onReply: (content: string, leadId: string, channel: string) => void; theme: 'dark' | 'light' }) {
     const [replyContent, setReplyContent] = useState('');
     const [isReplying, setIsReplying] = useState(false);
 
@@ -29,24 +25,26 @@ function EmailDetailView({ email, onReply, theme }: { email: Message | null; onR
         );
     }
 
+    const sender = email.direction === 'Inbound' ? 'From:' : 'To:';
+    const senderInfo = email.direction === 'Inbound' ? email.content.split('From:')[1]?.split('Subject:')[0]?.trim() : '(You)';
+
+
     return (
         <div className="flex flex-col h-full">
             {/* Email Header */}
             <div className={`p-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
                 <div className="flex items-center justify-between mb-4">
                     <h3 className={`text-xl font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        {/* Assuming your backend provides a subject in the message content.  Adjust as needed. */}
-                        {email.content.startsWith("Subject:") ? email.content.split("\n")[0].replace("Subject:", "").trim() : "No Subject"}
+                        {email.content.startsWith("Subject:") ? email.content.split("Subject:")[1]?.split("\n")[0]?.trim() : "No Subject"}
                     </h3>
                     <div className="flex items-center gap-2">
-                      {/*  Implement  starred logic */}
                         <button className={`p-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
-                            <Star className={`w-5 h-5 ${/*email.starred ? 'text-yellow-400' :*/ 'text-gray-400'}`} />
+                            <Star className="w-5 h-5 text-gray-400" /> {/* Implement starred logic later */}
                         </button>
                         <button className={`p-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
                             <Trash2 className="w-5 h-5 text-gray-400" />
                         </button>
-                        <button className={`p-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+                        <button className={`p-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`} onClick={() => setIsReplying(true)}>
                             <Reply className="w-5 h-5 text-gray-400" />
                         </button>
                         <button className={`p-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
@@ -57,12 +55,7 @@ function EmailDetailView({ email, onReply, theme }: { email: Message | null; onR
                 <div className="flex items-center justify-between">
                     <div>
                         <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                            {/* Display sender/recipient based on message direction */}
-                            {email.direction === "Inbound" ? "From: " + (email.content) : "To: (You)" }
-                        </p>
-                        <p className="text-sm text-gray-500">
-                            {/* Display email if needed */}
-
+                          {sender} {senderInfo}
                         </p>
                     </div>
                     <span className="text-sm text-gray-500">
@@ -74,8 +67,8 @@ function EmailDetailView({ email, onReply, theme }: { email: Message | null; onR
             {/* Email Content */}
             <div className="flex-1 overflow-y-auto p-6">
                 <div className={`prose ${theme === 'dark' ? 'prose-invert' : ''} max-w-none`}>
-                   {/* Display email content. Consider using a library like DOMPurify for security if rendering HTML. */}
-                   {email.content}
+                  {/*  Consider using a library like DOMPurify for security if rendering HTML. */}
+                  {email.content}
                 </div>
             </div>
 
@@ -105,12 +98,12 @@ function EmailDetailView({ email, onReply, theme }: { email: Message | null; onR
                             <button
                                 onClick={() => {
                                     if (replyContent.trim()) {
-                                        onReply(replyContent, email.lead_id, email.channel); // Pass leadId and channel
+                                        onReply(replyContent, email.lead_id, email.channel);
                                         setReplyContent('');
                                         setIsReplying(false);
                                     }
                                 }}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                             >
                                 Send Reply
                             </button>
@@ -119,7 +112,7 @@ function EmailDetailView({ email, onReply, theme }: { email: Message | null; onR
                 </div>
             )}
 
-            {/* Click to Reply (Placeholder) */}
+            {/* Click to Reply */}
             {!isReplying && (
                 <div className={`p-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-t`}>
                     <button
@@ -137,16 +130,14 @@ function EmailDetailView({ email, onReply, theme }: { email: Message | null; onR
         </div>
     );
 }
-
-
-
 export function EmailView({ theme, leads }: EmailViewProps) {
     const [selectedEmail, setSelectedEmail] = useState<Message | null>(null);
     const [emails, setEmails] = useState<Message[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showAIPopup, setShowAIPopup] = useState(false);
-    const [socket, setSocket] = useState<Socket | null>(null);
+    const { socket } = useApp(); // Access the socket from the context
+
 
      const fetchEmails = useCallback(async () => {
         try {
@@ -165,24 +156,21 @@ export function EmailView({ theme, leads }: EmailViewProps) {
       useEffect(() => {
         fetchEmails();
           // Set up WebSocket connection
-        const newSocket = io('http://localhost:3001'); // Replace with your backend URL
-        setSocket(newSocket)
-
-        newSocket.on('connect', () => {
-          console.log('Connected to WebSocket');
-        });
-
-         newSocket.on('message_received', (newMessage: Message) => {
-            // Update the messages list *only* if it's an email.
-            if (newMessage.channel === 'Email') {
-                setEmails(prevEmails => [...prevEmails, newMessage]);
-            }
-        });
+        if (socket) {
+            socket.on('message_received', (newMessage: Message) => {
+                // Update the messages list *only* if it's an email.
+                if (newMessage.channel === 'Email') {
+                    setEmails(prevEmails => [...prevEmails, newMessage]);
+                }
+            });
+        }
 
         return () => {
-          newSocket.disconnect();
+            if(socket) {
+                socket.off('message_received')
+            }
         };
-    }, [fetchEmails]);
+    }, [fetchEmails, socket]);
 
     const handleReply = async (content: string, leadId: string, channel: string) => {
       try {
@@ -275,7 +263,7 @@ export function EmailView({ theme, leads }: EmailViewProps) {
                         <div className="flex items-center gap-3">
                         <div className={`w-12 h-12 rounded-full ${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'} flex items-center justify-center`}>
                         {/* Display lead's initial if available, otherwise a default icon */}
-                        {lead ? lead.name[0] : <Users className="text-gray-400" />}
+                        {lead ? lead.name[0] : "?"}
                         </div>
                             <div className="flex-1">
                                 <div className="flex items-center justify-between">

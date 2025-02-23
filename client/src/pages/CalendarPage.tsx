@@ -4,8 +4,8 @@ import { Calendar } from '../components/Calendar';
 import { useApp } from '../contexts/AppContext';
 
 const CalendarPage: React.FC = () => {
-  const { theme, leads } = useApp();
-  return <Calendar theme={theme} leads={leads} />;
+    const { theme, leads } = useApp(); // Get leads from context
+    return <Calendar theme={theme} leads={leads} />;
 };
 
 export default CalendarPage;

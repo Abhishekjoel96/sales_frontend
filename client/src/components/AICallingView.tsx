@@ -1,12 +1,12 @@
 // src/components/AICallingView.tsx
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { PhoneIncoming, PhoneOutgoing, Phone, Plus, Filter, ArrowUpDown, X, FileText } from 'lucide-react';
 import { AnimatedCard } from './shared/AnimatedCard';
-import { CallLog } from '../models/CallLog';
-import * as callService from '../services/callService';
+import { CallLog } from '../models/CallLog'; // Import CallLog
+import * as callService from '../services/callService'; // Import callService
 import { format } from 'date-fns';
 import { Lead } from '../models/Lead';
+import { useApp } from '../contexts/AppContext';
 
 interface AICallingViewProps {
     theme: 'dark' | 'light';
@@ -204,34 +204,35 @@ function ScheduleCallModal({ isOpen, onClose, leads, onCallScheduled, theme }: S
 
 
 export function AICallingView({ theme, leads }: AICallingViewProps) {
-    const [filterOpen, setFilterOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'current' | 'reports'>('current');
-    const [showScheduleModal, setShowScheduleModal] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [callLogs, setCallLogs] = useState<CallLog[]>([]);
+  const [activeTab, setActiveTab] = useState<'current' | 'reports'>('current');
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [callLogs, setCallLogs] = useState<CallLog[]>([]);
 
+  // Using useCallback to prevent unnecessary re-creations of fetchCallLogs
   const fetchCallLogs = useCallback(async () => {
     try {
       setLoading(true);
-      const logs = await callService.getAllCallLogs(); // You'll need to implement this
+      const logs = await callService.getAllCallLogs();
       setCallLogs(logs);
-      setError(null);
+      setError(null); // Clear errors on successful fetch
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch call logs');
+      setError(err.message || "Failed to fetch call logs");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, []); // Empty dependency array means this function never changes
 
+    // Fetch call logs when component mounts, using useCallback function
     useEffect(() => {
-        fetchCallLogs();
-    }, [fetchCallLogs]);
+      fetchCallLogs();
+  }, [fetchCallLogs]);
 
-    const handleCallScheduled = (newCall: CallLog) => {
-      // Add to the UI
-      setCallLogs(prevCalls => [newCall, ...prevCalls]);
-    }
+  const handleCallScheduled = (newCall: CallLog) => {
+    // Add to the UI
+    setCallLogs(prevCalls => [newCall, ...prevCalls]);
+  }
 
 
     return (
@@ -272,90 +273,42 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
                     <span>Call Reports</span>
                 </button>
             </div>
+            {loading ? (     //Loading state
+              <div>Loading...</div>
+            ) : error ? (
+              <div>Error: {error}</div>
+            ) : (
+            activeTab === 'current' ? (
+                <>
+                    <div className="flex justify-end mb-6">
+                        <button
+                            onClick={() => setShowScheduleModal(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Schedule Call</span>
+                        </button>
+                    </div>
+                   {/*  Quick stats will be implemented later */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <AnimatedCard delay={0.1}>
+                        <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700': 'bg-white border-gray-200'} rounded-lg p-6 border`}>
 
-      {activeTab === 'current' ? (
-        <>
-          {/* Quick Stats */}
-          {/* You would fetch and display these dynamically */}
-          <div className="flex justify-end mb-6">
+                            </div>
+                        </AnimatedCard>
+                    </div>
 
-            <button
-              onClick={() => setShowScheduleModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Schedule Call</span>
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-
-            <AnimatedCard delay={0.1}>
-              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-6 border group hover:border-indigo-500/50 transition-all duration-300`}>
-                <div className="flex items-center justify-between mb-2">
-                  <Phone className="w-6 h-6 text-indigo-400" />
-                  <span className="text-green-400 text-sm">+12%</span>
-                </div>
-                <h3 className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Total Calls</h3>
-                <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>1,284</p>
-              </div>
-            </AnimatedCard>
-            <AnimatedCard delay={0.3}>
-              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-6 border group hover:border-indigo-500/50 transition-all duration-300`}>
-                <div className="flex items-center justify-between mb-2">
-                  <Clock className="w-6 h-6 text-blue-400" />
-                  <span className="text-green-400 text-sm">+5%</span>
-                </div>
-                <h3 className={`text theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Avg Duration</h3>
-                <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>4m 32s</p>
-              </div>
-            </AnimatedCard>
-
-            <AnimatedCard delay={0.2}>
-              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-6 border group hover:border-indigo-500/50 transition-all duration-300`}>
-                <div className="flex items-center justify-between mb-2">
-                  <User className="w-6 h-6 text-green-400" />
-                  <span className="text-green-400 text-sm">+8%</span>
-                </div>
-                <h3 className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Connected Rate</h3>
-                <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>68%</p>
-              </div>
-            </AnimatedCard>
-
-            <AnimatedCard delay={0.4}>
-              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-6 border group hover:border-indigo-500/50 transition-all duration-300`}>
-                <div className="flex items-center justify-between mb-2">
-                  <Calendar className="w-6 h-6 text-purple-400" />
-                  <span className="text-green-400 text-sm">+15%</span>
-                </div>
-                <h3 className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Conversion Rate</h3>
-                <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>23%</p>
-              </div>
-            </AnimatedCard>
-          </div>
-
-          {/* Call Status Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Incoming Calls */}
-            <AnimatedCard delay={0.5}>
-              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-lg p-6 border`}>
+                    {/* Call Status Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Incoming Calls */}
+                        <AnimatedCard delay={0.5}>
+                        <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-lg p-6 border`}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <PhoneIncoming className="w-5 h-5 text-green-400" />
                     <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Incoming Calls</h3>
                   </div>
-                  {/*  Filtering and sorting are currently not implemented in this example */}
-                  {/* <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setFilterOpen(!filterOpen)}
-                      className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
-                    >
-                      <Filter className="w-4 h-4 text-gray-400" />
-                    </button>
-                    <button className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors">
-                      <ArrowUpDown className="w-4 h-4 text-gray-400" />
-                    </button>
-                  </div> */}
-                </div>
+                  </div>
                 <div className="space-y-4">
                 {/* Placeholder data. Replace with dynamic data. */}
                   <CallItem
@@ -376,28 +329,16 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
                   />
                 </div>
               </div>
-            </AnimatedCard>
+                        </AnimatedCard>
 
-            {/* Outgoing Calls */}
-            <AnimatedCard delay={0.6}>
-              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-lg p-6 border`}>
+                        {/* Outgoing Calls */}
+                        <AnimatedCard delay={0.6}>
+                        <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-lg p-6 border`}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <PhoneOutgoing className="w-5 h-5 text-blue-400" />
                     <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Outgoing Calls</h3>
                   </div>
-                   {/* Filtering and sorting are currently not implemented in this example */}
-                  {/* <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setFilterOpen(!filterOpen)}
-                      className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
-                    >
-                      <Filter className="w-4 h-4 text-gray-400" />
-                    </button>
-                    <button className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors">
-                      <ArrowUpDown className="w-4 h-4 text-gray-400" />
-                    </button>
-                  </div> */}
                 </div>
                 <div className="space-y-4">
                 {/* Placeholder data. Replace with dynamic data. */}
@@ -419,21 +360,21 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
                   />
                 </div>
               </div>
-            </AnimatedCard>
-          </div>
-        </>
-      ) : (
-        //  Implement CallReportView component to show call reports.
-        <div> Call Reports </div>
-      )}
+                        </AnimatedCard>
+                    </div>
+                </>
+            ) : (
+                //  Implement CallReportView component to show call reports.
+              <div> Call Reports </div>
+            ))}
 
-      <ScheduleCallModal
-        isOpen={showScheduleModal}
-        onClose={() => setShowScheduleModal(false)}
-        onCallScheduled={handleCallScheduled}
-        leads={leads}
-        theme={theme}
-      />
+            <ScheduleCallModal
+                isOpen={showScheduleModal}
+                onClose={() => setShowScheduleModal(false)}
+                onCallScheduled={handleCallScheduled}
+                leads={leads} // Pass the leads to the modal
+                theme={theme}
+            />
 
         </>
     );

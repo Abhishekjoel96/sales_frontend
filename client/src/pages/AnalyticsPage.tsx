@@ -4,10 +4,9 @@ import { AnalyticsView } from '../components/AnalyticsView';
 import { useApp } from '../contexts/AppContext';
 
 const AnalyticsPage: React.FC = () => {
-   const { theme } = useApp(); // Assuming you have theme in your context
-
+  const { theme } = useApp();
   return (
-    <AnalyticsView theme={theme} />
+     <AnalyticsView theme={theme} />
   )
 }
 

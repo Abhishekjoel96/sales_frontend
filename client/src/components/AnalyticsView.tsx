@@ -16,7 +16,7 @@ import {
 import { Users, PhoneCall, TrendingUp, Mail, Calendar } from 'lucide-react';
 import * as analyticsService from '../services/analyticsService'; // You'll need to create this
 import { AnimatedCard } from './shared/AnimatedCard';
-
+import { ArrowUp, ArrowDown, Users, Calendar, Clock, PhoneCall, TrendingUp, Mail } from 'lucide-react'; //Import the neccessary icons
 
 ChartJS.register(
     CategoryScale,

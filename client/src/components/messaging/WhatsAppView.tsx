@@ -4,8 +4,9 @@ import { Search, Bot, X, MessageCircle } from 'lucide-react';
 import * as messageService from '../../services/messageService';
 import { Message } from '../../models/Message';
 import { Lead } from '../../models/Lead';
-import Chat from './Chat';
+import Chat from './Chat';  // Import the Chat component
 import { io, Socket } from 'socket.io-client';
+import { useApp } from '../../contexts/AppContext';
 
 interface WhatsAppViewProps {
     theme: 'dark' | 'light';
@@ -13,14 +14,14 @@ interface WhatsAppViewProps {
 }
 
 export function WhatsAppView({ theme, leads }: WhatsAppViewProps) {
-    const [selectedLead, setSelectedLead] = useState<{ name: string; phone: string; id: string; } | null>(null);
+    const [selectedLead, setSelectedLead] = useState<{name: string, phone: string, id: string} | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [showAIPopup, setShowAIPopup] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [socket, setSocket] = useState<Socket | null>(null);
+    const { socket } = useApp(); // Access socket from context
 
-    // useCallback to prevent unnecessary re-renders of fetchMessages
+    // Use useCallback to prevent unnecessary re-renders of fetchMessages
     const fetchMessages = useCallback(async (leadId: string) => {
         try {
             setLoading(true);
@@ -42,39 +43,35 @@ export function WhatsAppView({ theme, leads }: WhatsAppViewProps) {
     }, [selectedLead, fetchMessages]);
 
    useEffect(() => {
-      const newSocket = io('http://localhost:3001'); // Replace with your backend URL and port
-      setSocket(newSocket);
-        newSocket.on('connect', () => {
-            console.log('Connected to WebSocket');
-        });
+        if (!socket) return; // Don't proceed if socket hasn't been initialized
 
-        newSocket.on('message_received', (newMessage: Message) => {
+        const handleMessageReceived = (newMessage: Message) => {
+          //Only add the message if it's a WhatsApp message AND for the currently selected lead
+          if (newMessage.channel === 'WhatsApp' && selectedLead && newMessage.lead_id === selectedLead.id) {
+            setMessages((prevMessages) => [...prevMessages, newMessage]);
+          }
+        };
 
-            if (newMessage.channel === 'WhatsApp' && selectedLead && newMessage.lead_id === selectedLead.id) {
-                setMessages(prevMessages => [...prevMessages, newMessage]);
-            }
-        });
+        socket.on('message_received', handleMessageReceived);
 
         return () => {
-            newSocket.disconnect();
+            socket.off('message_received', handleMessageReceived); // Clean up listener
         };
-    }, [selectedLead]); // Depend on selectedContact, so the effect runs when it changes
-
-
+    }, [selectedLead, socket]); // Depend on selectedLead and socket, so the effect runs when it changes
 
     const handleSendMessage = async (text: string, leadId: string, channel: string) => {
         try {
             await messageService.sendMessage(leadId, channel, text);
              // Fetch all the messages.
-              fetchMessages(leadId);
+            fetchMessages(leadId)
         } catch (error: any) {
             console.error("Error sending message:", error);
-            setError(error.message || "Failed to send message");
+            setError(error.message || 'Failed to send message');  // Update error state
         }
     };
 
     // Function to handle contact/conversation selection
-    const handleSelectLead = (lead: Lead) => {
+    const handleSelectLead = (lead : Lead) => {
       setSelectedLead({name: lead.name, phone: lead.phone_number, id: lead.id});
       fetchMessages(lead.id) // Fetch messages when a contact is selected
     }
@@ -131,7 +128,7 @@ export function WhatsAppView({ theme, leads }: WhatsAppViewProps) {
                     </div>
                 </div>
 
-                {/* Contacts */}
+                {/* Contacts - Map your leads to contacts */}
                 <div className="overflow-y-auto">
                 {leads.map((lead) => (
                   <div
@@ -155,7 +152,7 @@ export function WhatsAppView({ theme, leads }: WhatsAppViewProps) {
                         <div className="flex items-center justify-between">
                           <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                             {lead.name}
-                        </h3>
+                          </h3>
                         </div>
                         <div className="flex items-center justify-between mt-1">
                           <p className={`text-sm truncate ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>

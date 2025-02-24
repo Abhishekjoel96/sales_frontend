@@ -10,7 +10,7 @@ interface ChatProps {
   theme: 'dark' | 'light';
 }
 
-function Chat({ contact, messages, onSendMessage, theme }: ChatProps) {
+export function Chat({ contact, messages, onSendMessage, theme }: ChatProps) { //Removed export default
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

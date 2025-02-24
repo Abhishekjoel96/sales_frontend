@@ -1,220 +1,205 @@
 // src/components/AICallingView.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-//Corrected import
-import { PhoneIncoming, PhoneOutgoing, Phone, Plus, Filter, ArrowUpDown, X, FileText, Clock, User, Calendar } from 'lucide-react';
+import { 
+  PhoneIncoming, 
+  PhoneOutgoing, 
+  Phone, 
+  Plus, 
+  Filter, 
+  ArrowUpDown, 
+  X, 
+  FileText, 
+  Clock, 
+  User, 
+  Calendar 
+} from 'lucide-react';
 import { AnimatedCard } from './shared/AnimatedCard';
-import { CallLog } from '../models/CallLog'; // Import CallLog
-import * as callService from '../services/callService'; // Import callService
+import { CallLog } from '../models/CallLog'; // Import CallLog model
+import * as callService from '../services/callService'; // Call service functions
 import { format } from 'date-fns';
 import { Lead } from '../models/Lead';
 
 interface AICallingViewProps {
-    theme: 'dark' | 'light';
-    leads: Lead[]; // To select the leads.
+  theme: 'dark' | 'light';
+  leads: Lead[]; // Leads provided for selection and reporting
 }
 
 interface CallItemProps {
-    name: string;
-    number: string;
-    time: string;
-    status: string;
-    type: string;
-    theme: 'dark' | 'light';
+  name: string;
+  number: string;
+  time: string;
+  status: string;
+  type: string;
+  theme: 'dark' | 'light';
 }
 
 function CallItem({ name, number, time, status, type, theme }: CallItemProps) {
-    const statusColor =
-        status === 'completed' ? 'text-green-400' :
-            status === 'failed' || status === 'no_answer' || status === 'busy' ? 'text-red-400' :
-                status === 'ringing' ? 'text-yellow-400' :
-                    'text-gray-400';
+  const statusColor =
+    status === 'completed'
+      ? 'text-green-400'
+      : status === 'failed' || status === 'no_answer' || status === 'busy'
+      ? 'text-red-400'
+      : status === 'ringing'
+      ? 'text-yellow-400'
+      : 'text-gray-400';
 
-    return (
-        <div className={`flex items-center justify-between p-3 ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-200'} rounded-lg border  hover:border-indigo-500/50 transition-all duration-300`}>
-            <div className="flex-1">
-                <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{name}</p>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{number}</p>
-                <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>{time}</p>
-            </div>
-            <div className="text-right">
-                <p className={`font-medium ${statusColor}`}>{status}</p>
-                <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>{type}</p>
-            </div>
-        </div>
-    );
+  return (
+    <div className={`flex items-center justify-between p-3 ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-200'} rounded-lg border hover:border-indigo-500/50 transition-all duration-300`}>
+      <div className="flex-1">
+        <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{name}</p>
+        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{number}</p>
+        <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>{time}</p>
+      </div>
+      <div className="text-right">
+        <p className={`font-medium ${statusColor}`}>{status}</p>
+        <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>{type}</p>
+      </div>
+    </div>
+  );
 }
 
 interface ScheduleCallModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    leads: Lead[]; // Pass leads to the modal
-    onCallScheduled: (callLog: CallLog) => void; // Callback for successful scheduling
-    theme: 'dark' | 'light';
+  isOpen: boolean;
+  onClose: () => void;
+  leads: Lead[]; // List of leads for selection
+  onCallScheduled: (callLog: CallLog) => void; // Callback after call scheduling
+  theme: 'dark' | 'light';
 }
 
 function ScheduleCallModal({ isOpen, onClose, leads, onCallScheduled, theme }: ScheduleCallModalProps) {
-    const [selectedLeadId, setSelectedLeadId] = useState('');
-    const [selectedDate, setSelectedDate] = useState('');
-    const [selectedTime, setSelectedTime] = useState('');
-    const [selectedLanguage, setSelectedLanguage] = useState('en-US'); // Default language
-    const [scheduling, setScheduling] = useState(false); // Loading state
-    const [error, setError] = useState<string | null>(null);
+  const [selectedLeadId, setSelectedLeadId] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState('en-US'); // Default language selection
+  const [scheduling, setScheduling] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  if (!isOpen) return null;
 
-    if (!isOpen) return null;
+  const handleScheduleCall = async () => {
+    try {
+      setScheduling(true);
+      setError(null);
+      if (!selectedLeadId || !selectedDate || !selectedTime) {
+        throw new Error("Please fill in all fields.");
+      }
 
-    const handleScheduleCall = async () => {
-        try {
-            setScheduling(true);
-            setError(null);
-            if (!selectedLeadId || !selectedDate || !selectedTime) {
-                throw new Error("Please fill in all fields.");
-            }
+      const lead = leads.find((lead) => lead.id === selectedLeadId);
+      if (!lead) {
+        throw new Error("Selected lead not found.");
+      }
 
-            const lead = leads.find((lead) => lead.id === selectedLeadId);
-            if (!lead) {
-                throw new Error("Selected lead not found.");
-            }
+      // Call the callService to make a call. Date and time combination are not used in the call service in this logic.
+      const newCall = await callService.makeCall(lead.phone_number, lead.id, selectedLanguage);
+      onCallScheduled(newCall);  // Notify parent about the new call log
+      onClose(); // Close the modal
+    } catch (error: any) {
+      setError(error.message || "Failed to schedule call.");
+    } finally {
+      setScheduling(false);
+    }
+  };
 
-            //Combine date and time
-            const dateTimeStr = `<span class="math-inline">\{selectedDate\}T</span>{selectedTime}:00`;
-
-            const newCall = await callService.makeCall(lead.phone_number, lead.id, selectedLanguage); //Added a function in call service
-            onCallScheduled(newCall);  //Update the parent
-            onClose(); // Close modal
-
-        } catch (error: any) {
-            setError(error.message || "Failed to schedule call.");
-        } finally {
-            setScheduling(false);
-        }
-    };
-
-
-    return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl p-6 w-full max-w-md`}>
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        Schedule AI Call
-                    </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>
-                            Select Lead
-                        </label>
-                        <select
-                            value={selectedLeadId}
-                            onChange={(e) => setSelectedLeadId(e.target.value)}
-                            className={`w-full px-3 py-2 ${
-                                theme === 'dark'
-                                    ? 'bg-gray-700 border-gray-600 text-white'
-                                    : 'bg-gray-50 border-gray-300 text-gray-900'
-                            } border rounded-lg focus:outline-none focus:border-indigo-500`}
-                        >
-                            <option value="">Select a Lead</option>
-                            {leads.map((lead) => (
-                                <option key={lead.id} value={lead.id}>
-                                    {lead.name} ({lead.phone_number})
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>
-                            Date
-                        </label>
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className={`w-full px-3 py-2 ${
-                                theme === 'dark'
-                                    ? 'bg-gray-700 border-gray-600 text-white'
-                                    : 'bg-gray-50 border-gray-300 text-gray-900'
-                            } border rounded-lg focus:outline-none focus:border-indigo-500`}
-                        />
-                    </div>
-
-                    <div>
-                        <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>
-                            Time
-                        </label>
-                        <input
-                            type="time"
-                            value={selectedTime}
-                            onChange={(e) => setSelectedTime(e.target.value)}
-                            className={`w-full px-3 py-2 ${
-                                theme === 'dark'
-                                    ? 'bg-gray-700 border-gray-600 text-white'
-                                    : 'bg-gray-50 border-gray-300 text-gray-900'
-                            } border rounded-lg focus:outline-none focus:border-indigo-500`}
-                        />
-                    </div>
-                    <div>
-                        <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>
-                            Language
-                        </label>
-                         <select
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value)}
-                className={`w-full px-3 py-2 ${
-                  theme === 'dark'
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-gray-50 border-gray-300 text-gray-900'
-                } border rounded-lg focus:outline-none focus:border-indigo-500`}
-              >
-                <option value="en-US">English</option>
-                <option value="fr-FR">French</option>
-                <option value="de-DE">German</option>
-                <option value="es-ES">Spanish</option>
-                <option value="it-IT">Italian</option>
-              </select>
-                    </div>
-                    {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-                </div>
-
-                <div className="flex justify-end gap-3 mt-6">
-
-                    <button
-                        onClick={onClose}
-                        className={`px-4 py-2 ${
-                            theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
-                        } text-gray-400 rounded-lg transition-colors`}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleScheduleCall}
-                        disabled={scheduling}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-                    >
-                        {scheduling ? 'Scheduling...' : 'Schedule Call'}
-                    </button>
-                </div>
-            </div>
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl p-6 w-full max-w-md`}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            Schedule AI Call
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+            <X className="w-5 h-5" />
+          </button>
         </div>
-    );
+        <div className="space-y-4">
+          <div>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>
+              Select Lead
+            </label>
+            <select
+              value={selectedLeadId}
+              onChange={(e) => setSelectedLeadId(e.target.value)}
+              className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:border-indigo-500`}
+            >
+              <option value="">Select a Lead</option>
+              {leads.map((lead) => (
+                <option key={lead.id} value={lead.id}>
+                  {lead.name} ({lead.phone_number})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>
+              Date
+            </label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:border-indigo-500`}
+            />
+          </div>
+          <div>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>
+              Time
+            </label>
+            <input
+              type="time"
+              value={selectedTime}
+              onChange={(e) => setSelectedTime(e.target.value)}
+              className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:border-indigo-500`}
+            />
+          </div>
+          <div>
+            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>
+              Language
+            </label>
+            <select
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:border-indigo-500`}
+            >
+              <option value="en-US">English</option>
+              <option value="fr-FR">French</option>
+              <option value="de-DE">German</option>
+              <option value="es-ES">Spanish</option>
+              <option value="it-IT">Italian</option>
+            </select>
+          </div>
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+        </div>
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className={`px-4 py-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} text-gray-400 rounded-lg transition-colors`}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleScheduleCall}
+            disabled={scheduling}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+          >
+            {scheduling ? 'Scheduling...' : 'Schedule Call'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-
 export function AICallingView({ theme, leads }: AICallingViewProps) {
-    const [filterOpen, setFilterOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'current' | 'reports'>('current');
-    const [showScheduleModal, setShowScheduleModal] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [callLogs, setCallLogs] = useState<CallLog[]>([]);
+  const [activeTab, setActiveTab] = useState<'current' | 'reports'>('current');
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [callLogs, setCallLogs] = useState<CallLog[]>([]);
 
   const fetchCallLogs = useCallback(async () => {
     try {
       setLoading(true);
-      const logs = await callService.getAllCallLogs(); // You'll need to implement this
+      const logs = await callService.getAllCallLogs(); // Implement call log fetching in callService
       setCallLogs(logs);
       setError(null);
     } catch (err: any) {
@@ -224,61 +209,45 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
     }
   }, []);
 
-    useEffect(() => {
-        fetchCallLogs();
-    }, [fetchCallLogs]);
+  useEffect(() => {
+    fetchCallLogs();
+  }, [fetchCallLogs]);
 
-    const handleCallScheduled = (newCall: CallLog) => {
-      // Add to the UI
-      setCallLogs(prevCalls => [newCall, ...prevCalls]);
-    }
+  const handleCallScheduled = (newCall: CallLog) => {
+    setCallLogs((prevCalls) => [newCall, ...prevCalls]);
+  };
 
-
-    return (
-        <>
-            <header className="mb-8">
-                <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    AI Calling Dashboard
-                </h2>
-                <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                    Monitor and manage AI-powered calls
-                </p>
-            </header>
-
-            {/* Tabs */}
-            <div className="flex items-center gap-4 mb-8">
-                <button
-                    onClick={() => setActiveTab('current')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${activeTab === 'current'
-                        ? 'bg-indigo-600 text-white'
-                        : theme === 'dark'
-                            ? 'text-gray-400 hover:bg-gray-800'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                >
-                    <Phone className="w-4 h-4" />
-                    <span>Current Calls</span>
-                </button>
-                <button
-                    onClick={() => setActiveTab('reports')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${activeTab === 'reports'
-                        ? 'bg-indigo-600 text-white'
-                        : theme === 'dark'
-                            ? 'text-gray-400 hover:bg-gray-800'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                >
-                    <FileText className="w-4 h-4" />
-                    <span>Call Reports</span>
-                </button>
-            </div>
-
+  return (
+    <>
+      <header className="mb-8">
+        <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          AI Calling Dashboard
+        </h2>
+        <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
+          Monitor and manage AI-powered calls
+        </p>
+      </header>
+      {/* Tabs */}
+      <div className="flex items-center gap-4 mb-8">
+        <button
+          onClick={() => setActiveTab('current')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${activeTab === 'current' ? 'bg-indigo-600 text-white' : theme === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`}
+        >
+          <Phone className="w-4 h-4" />
+          <span>Current Calls</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('reports')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${activeTab === 'reports' ? 'bg-indigo-600 text-white' : theme === 'dark' ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`}
+        >
+          <FileText className="w-4 h-4" />
+          <span>Call Reports</span>
+        </button>
+      </div>
       {activeTab === 'current' ? (
         <>
           {/* Quick Stats */}
-          {/* You would fetch and display these dynamically */}
           <div className="flex justify-end mb-6">
-
             <button
               onClick={() => setShowScheduleModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -288,7 +257,6 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-
             <AnimatedCard delay={0.1}>
               <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-6 border group hover:border-indigo-500/50 transition-all duration-300`}>
                 <div className="flex items-center justify-between mb-2">
@@ -309,7 +277,6 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
                 <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>4m 32s</p>
               </div>
             </AnimatedCard>
-
             <AnimatedCard delay={0.2}>
               <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-6 border group hover:border-indigo-500/50 transition-all duration-300`}>
                 <div className="flex items-center justify-between mb-2">
@@ -320,7 +287,6 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
                 <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>68%</p>
               </div>
             </AnimatedCard>
-
             <AnimatedCard delay={0.4}>
               <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-6 border group hover:border-indigo-500/50 transition-all duration-300`}>
                 <div className="flex items-center justify-between mb-2">
@@ -332,7 +298,6 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
               </div>
             </AnimatedCard>
           </div>
-
           {/* Call Status Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Incoming Calls */}
@@ -343,49 +308,37 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
                     <PhoneIncoming className="w-5 h-5 text-green-400" />
                     <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Incoming Calls</h3>
                   </div>
-                  {/*  Filtering and sorting are currently not implemented in this example */}
-                  {/* <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setFilterOpen(!filterOpen)}
-                      className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
-                    >
-                      <Filter className="w-4 h-4 text-gray-400" />
-                    </button>
-                    <button className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors">
-                      <ArrowUpDown className="w-4 h-4 text-gray-400" />
-                    </button>
-                  </div> */}
                 </div>
                 <div className="space-y-4">
-                {/* Placeholder data. Replace with dynamic data. */}
-                 {loading ? (
+                  {loading ? (
                     <p>Loading calls...</p>
-                    ) : error ? (
+                  ) : error ? (
                     <p className="text-red-500">Error: {error}</p>
-                    ) : callLogs.length === 0 ? (
-                        <p>No calls available.</p>
-                    ) : (
-                        callLogs.filter(callLog => callLog.direction === 'Inbound').map((callLog) => {
-                            const lead = leads.find(l => l.id === callLog.lead_id);
-                            const name = lead ? lead.name : "Unknown";
-                            const number = lead ? lead.phone_number : "Unknown";
-                            return (
-                              <CallItem
-                                key={callLog.id}
-                                name={name}
-                                number={number}
-                                time={format(new Date(callLog.timestamp), 'p')}
-                                status={callLog.status}
-                                type={callLog.direction === 'Inbound' ? "incoming" : "outgoing"}
-                                theme={theme}
-                              />
-                            );
-                        })
+                  ) : callLogs.length === 0 ? (
+                    <p>No calls available.</p>
+                  ) : (
+                    callLogs
+                      .filter((callLog) => callLog.direction === 'Inbound')
+                      .map((callLog) => {
+                        const lead = leads.find((l) => l.id === callLog.lead_id);
+                        const name = lead ? lead.name : "Unknown";
+                        const number = lead ? lead.phone_number : "Unknown";
+                        return (
+                          <CallItem
+                            key={callLog.id}
+                            name={name}
+                            number={number}
+                            time={format(new Date(callLog.timestamp), 'p')}
+                            status={callLog.status}
+                            type="incoming"
+                            theme={theme}
+                          />
+                        );
+                      })
                   )}
                 </div>
               </div>
             </AnimatedCard>
-
             {/* Outgoing Calls */}
             <AnimatedCard delay={0.6}>
               <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-lg p-6 border`}>
@@ -394,43 +347,33 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
                     <PhoneOutgoing className="w-5 h-5 text-blue-400" />
                     <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Outgoing Calls</h3>
                   </div>
-                   {/* Filtering and sorting are currently not implemented in this example */}
-                  {/* <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setFilterOpen(!filterOpen)}
-                      className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
-                    >
-                      <Filter className="w-4 h-4 text-gray-400" />
-                    </button>
-                    <button className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors">
-                      <ArrowUpDown className="w-4 h-4 text-gray-400" />
-                    </button>
-                  </div> */}
                 </div>
                 <div className="space-y-4">
-                {loading ? (
+                  {loading ? (
                     <p>Loading calls...</p>
-                    ) : error ? (
+                  ) : error ? (
                     <p className="text-red-500">Error: {error}</p>
-                    ) : callLogs.length === 0? (
-                        <p>No calls available.</p>
-                    ) : (
-                        callLogs.filter(callLog => callLog.direction === 'Outbound').map((callLog) => {
-                            const lead = leads.find(l => l.id === callLog.lead_id);
-                            const name = lead ? lead.name : "Unknown";
-                            const number = lead ? lead.phone_number : "Unknown";
-                           return(
-                            <CallItem
+                  ) : callLogs.length === 0 ? (
+                    <p>No calls available.</p>
+                  ) : (
+                    callLogs
+                      .filter((callLog) => callLog.direction === 'Outbound')
+                      .map((callLog) => {
+                        const lead = leads.find((l) => l.id === callLog.lead_id);
+                        const name = lead ? lead.name : "Unknown";
+                        const number = lead ? lead.phone_number : "Unknown";
+                        return (
+                          <CallItem
                             key={callLog.id}
                             name={name}
                             number={number}
                             time={format(new Date(callLog.timestamp), 'p')}
                             status={callLog.status}
-                            type={callLog.direction === 'Inbound' ? "incoming" : "outgoing"}
+                            type="outgoing"
                             theme={theme}
                           />
-                           );
-                        })
+                        );
+                      })
                   )}
                 </div>
               </div>
@@ -438,10 +381,9 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
           </div>
         </>
       ) : (
-        //  Implement CallReportView component to show call reports.
-        <div> Call Reports </div>
+        // Call Reports Tab (Placeholder)
+        <div>Call Reports</div>
       )}
-
       <ScheduleCallModal
         isOpen={showScheduleModal}
         onClose={() => setShowScheduleModal(false)}
@@ -449,7 +391,6 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
         leads={leads}
         theme={theme}
       />
-
-        </>
-    );
+    </>
+  );
 }

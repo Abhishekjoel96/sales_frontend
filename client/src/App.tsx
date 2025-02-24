@@ -1,7 +1,5 @@
-// src/App.tsx
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-//Corrected imports
 import {
     Users,
     PhoneCall,
@@ -12,7 +10,6 @@ import {
     BarChart3,
     Settings,
     UserPlus,
-    MessagesSquare,
     FileText
 } from 'lucide-react';
 import { AppProvider } from './contexts/AppContext';
@@ -93,7 +90,6 @@ function App() {
                       <Suspense fallback={<div>Loading...</div>}>
                         <Routes>
                             {routes.map((route) => (
-                                // Added key prop here.
                                 <Route key={route.path} path={route.path} element={<PageTransition key={route.path}><route.component /></PageTransition>} />
                             ))}
                         </Routes>

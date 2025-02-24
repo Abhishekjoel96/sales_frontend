@@ -27,7 +27,7 @@ export const useCalls = () => {
         fetchCalls();
     }, [fetchCalls]);
 
-      useEffect(() => {
+    useEffect(() => {
         if(!socket) return;
         socket.on('call_initiated', (newCall: CallLog) => {
             setCalls(prevCalls => [newCall, ...prevCalls]);
@@ -40,7 +40,7 @@ export const useCalls = () => {
             );
         });
 
-         socket.on('call_transcribed', (updatedCall: CallLog) => {  // Assuming you send back the full updated CallLog
+         socket.on('call_transcribed', (updatedCall: CallLog) => {
              setCalls(prevCalls =>
                prevCalls.map((call) =>
                  call.id === updatedCall.id ? updatedCall: call
@@ -50,9 +50,9 @@ export const useCalls = () => {
 
 
         return () => {
-          socket.off('call_initiated')
-          socket.off('call_updated')
-          socket.off('call_transcribed')
+            socket.off('call_initiated')
+            socket.off('call_updated')
+            socket.off('call_transcribed')
         };
     }, [socket]);
 

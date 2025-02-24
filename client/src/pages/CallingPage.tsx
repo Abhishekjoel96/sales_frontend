@@ -4,7 +4,7 @@ import { AICallingView } from '../components/AICallingView';
 import { useApp } from '../contexts/AppContext';
 
 const CallingPage: React.FC = () => {
-    const { theme, leads } = useApp(); // Get leads and theme from context
+    const { theme, leads } = useApp(); // Get leads from context for scheduling
     return <AICallingView theme={theme} leads={leads}/>;
 };
 

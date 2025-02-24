@@ -1,4 +1,5 @@
 // src/services/calendarService.ts
+// Renamed to appointmentService to better reflect its purpose
 import api from '../config/api';
 import { Appointment } from '../models/Appointment';
 
@@ -11,10 +12,11 @@ export const getAllAppointments = async (): Promise<Appointment[]> => {
     const response = await api.get('/calendar');
     return response.data;
 };
-export const getAppointment = async(id: string): Promise<Appointment> => {
-  const response = await api.get(`/calendar/${id}`);
-  return response.data;
-}
+
+export const getAppointmentById = async (id: string): Promise<Appointment> => {
+    const response = await api.get(`/calendar/${id}`);
+    return response.data;
+};
 
 export const updateAppointment = async (id: string, updateData: Partial<Omit<Appointment, 'id' | 'created_at'>>): Promise<Appointment> => {
     const response = await api.put(`/calendar/${id}`, updateData);

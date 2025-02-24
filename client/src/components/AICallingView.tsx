@@ -1,6 +1,7 @@
-//All the missing icons are imported here
+// src/components/AICallingView.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { PhoneIncoming, PhoneOutgoing, Phone, Plus, Filter, ArrowUpDown, X, FileText, Clock, User, Calendar } from 'lucide-react'; //Added icons
+//Corrected import
+import { PhoneIncoming, PhoneOutgoing, Phone, Plus, Filter, ArrowUpDown, X, FileText, Clock, User, Calendar } from 'lucide-react';
 import { AnimatedCard } from './shared/AnimatedCard';
 import { CallLog } from '../models/CallLog'; // Import CallLog
 import * as callService from '../services/callService'; // Import callService
@@ -257,7 +258,7 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
                 >
                     <Phone className="w-4 h-4" />
                     <span>Current Calls</span>
-                    </button>
+                </button>
                 <button
                     onClick={() => setActiveTab('reports')}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${activeTab === 'reports'
@@ -275,6 +276,7 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
       {activeTab === 'current' ? (
         <>
           {/* Quick Stats */}
+          {/* You would fetch and display these dynamically */}
           <div className="flex justify-end mb-6">
 
             <button
@@ -286,8 +288,50 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {/*Placeholder data*/}
-            </div>
+
+            <AnimatedCard delay={0.1}>
+              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-6 border group hover:border-indigo-500/50 transition-all duration-300`}>
+                <div className="flex items-center justify-between mb-2">
+                  <Phone className="w-6 h-6 text-indigo-400" />
+                  <span className="text-green-400 text-sm">+12%</span>
+                </div>
+                <h3 className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Total Calls</h3>
+                <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>1,284</p>
+              </div>
+            </AnimatedCard>
+            <AnimatedCard delay={0.3}>
+              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-6 border group hover:border-indigo-500/50 transition-all duration-300`}>
+                <div className="flex items-center justify-between mb-2">
+                  <Clock className="w-6 h-6 text-blue-400" />
+                  <span className="text-green-400 text-sm">+5%</span>
+                </div>
+                <h3 className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Avg Duration</h3>
+                <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>4m 32s</p>
+              </div>
+            </AnimatedCard>
+
+            <AnimatedCard delay={0.2}>
+              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-6 border group hover:border-indigo-500/50 transition-all duration-300`}>
+                <div className="flex items-center justify-between mb-2">
+                  <User className="w-6 h-6 text-green-400" />
+                  <span className="text-green-400 text-sm">+8%</span>
+                </div>
+                <h3 className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Connected Rate</h3>
+                <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>68%</p>
+              </div>
+            </AnimatedCard>
+
+            <AnimatedCard delay={0.4}>
+              <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-6 border group hover:border-indigo-500/50 transition-all duration-300`}>
+                <div className="flex items-center justify-between mb-2">
+                  <Calendar className="w-6 h-6 text-purple-400" />
+                  <span className="text-green-400 text-sm">+15%</span>
+                </div>
+                <h3 className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Conversion Rate</h3>
+                <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>23%</p>
+              </div>
+            </AnimatedCard>
+          </div>
 
           {/* Call Status Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -299,7 +343,7 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
                     <PhoneIncoming className="w-5 h-5 text-green-400" />
                     <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Incoming Calls</h3>
                   </div>
-                   {/*Filtering and sorting are currently not implemented in this example */}
+                  {/*  Filtering and sorting are currently not implemented in this example */}
                   {/* <div className="flex items-center gap-2">
                     <button
                       onClick={() => setFilterOpen(!filterOpen)}
@@ -313,7 +357,31 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
                   </div> */}
                 </div>
                 <div className="space-y-4">
-                {/* Placeholder data. */}
+                {/* Placeholder data. Replace with dynamic data. */}
+                 {loading ? (
+                    <p>Loading calls...</p>
+                    ) : error ? (
+                    <p className="text-red-500">Error: {error}</p>
+                    ) : callLogs.length === 0 ? (
+                        <p>No calls available.</p>
+                    ) : (
+                        callLogs.filter(callLog => callLog.direction === 'Inbound').map((callLog) => {
+                            const lead = leads.find(l => l.id === callLog.lead_id);
+                            const name = lead ? lead.name : "Unknown";
+                            const number = lead ? lead.phone_number : "Unknown";
+                            return (
+                              <CallItem
+                                key={callLog.id}
+                                name={name}
+                                number={number}
+                                time={format(new Date(callLog.timestamp), 'p')}
+                                status={callLog.status}
+                                type={callLog.direction === 'Inbound' ? "incoming" : "outgoing"}
+                                theme={theme}
+                              />
+                            );
+                        })
+                  )}
                 </div>
               </div>
             </AnimatedCard>
@@ -340,7 +408,30 @@ export function AICallingView({ theme, leads }: AICallingViewProps) {
                   </div> */}
                 </div>
                 <div className="space-y-4">
-                {/* Placeholder data.  */}
+                {loading ? (
+                    <p>Loading calls...</p>
+                    ) : error ? (
+                    <p className="text-red-500">Error: {error}</p>
+                    ) : callLogs.length === 0? (
+                        <p>No calls available.</p>
+                    ) : (
+                        callLogs.filter(callLog => callLog.direction === 'Outbound').map((callLog) => {
+                            const lead = leads.find(l => l.id === callLog.lead_id);
+                            const name = lead ? lead.name : "Unknown";
+                            const number = lead ? lead.phone_number : "Unknown";
+                           return(
+                            <CallItem
+                            key={callLog.id}
+                            name={name}
+                            number={number}
+                            time={format(new Date(callLog.timestamp), 'p')}
+                            status={callLog.status}
+                            type={callLog.direction === 'Inbound' ? "incoming" : "outgoing"}
+                            theme={theme}
+                          />
+                           );
+                        })
+                  )}
                 </div>
               </div>
             </AnimatedCard>

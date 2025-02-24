@@ -6,8 +6,10 @@ import { Appointment } from '../models/Appointment';
 import { CallLog } from '../models/CallLog';
 import { Message } from '../models/Message';
 import { AISettings } from '../models/AISettings';
-import { AppContext, AppProvider } from './contexts/AppContext';
-import { useDebounce } from '../hooks/useDebounce';
+import * as leadService from '../services/leadService';
+import * as messageService from '../services/messageService';
+import * as calendarService from '../services/calendarService';
+import * as callService from '../services/callService';
 
 interface AppContextType {
     leads: Lead[];
@@ -25,16 +27,16 @@ interface AppContextType {
     setTheme: React.Dispatch<React.SetStateAction<'dark' | 'light'>>;
     aiSettings: AISettings[];
     setAiSettings: React.Dispatch<React.SetStateAction<AISettings[]>>;
-    fetchData: () => Promise<void>; // Add this
+    fetchData: () => Promise<void>;
 }
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+export const AppContext = createContext<AppContextType | undefined>(undefined); //Corrected export
 
 interface AppProviderProps {
     children: ReactNode;
 }
 
-export function AppProvider({ children }: AppProviderProps) {
+export function AppProvider({ children }: AppProviderProps) {  //Corrected export
     const [leads, setLeads] = useState<Lead[]>([]);
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [callLogs, setCallLogs] = useState<CallLog[]>([]);
@@ -49,8 +51,8 @@ export function AppProvider({ children }: AppProviderProps) {
      const fetchData = async () => {
         setIsLoading(true)
         try{
-            // const fetchedLeads = await leadService.getAllLeads()
-            // setLeads(fetchedLeads);
+            const fetchedLeads = await leadService.getLeads()
+            setLeads(fetchedLeads);
         }
         catch(error: any){
             setError(error.message || "Failed to fetch the data")

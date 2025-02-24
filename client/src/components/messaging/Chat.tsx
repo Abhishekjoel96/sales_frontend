@@ -1,4 +1,4 @@
-//src/components/messaging/Chat.tsx
+// src/components/messaging/Chat.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Smile, Paperclip } from 'lucide-react';  //Removed MoreVertical
 import { Message } from '../../models/Message';

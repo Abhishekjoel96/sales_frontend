@@ -19,7 +19,7 @@ export function SMSView({ theme, leads }: SMSViewProps) {
     const [showAIPopup, setShowAIPopup] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { socket, setMessages: setContextMessages } = useApp();
+    const { socket, setMessages: setGlobalMessages } = useApp();
 
 
     // Use useCallback to prevent unnecessary re-renders of fetchMessages
@@ -43,11 +43,12 @@ export function SMSView({ theme, leads }: SMSViewProps) {
         }
     }, [selectedContact, fetchMessages]);
 
-     useEffect(() => {
-        if (!socket) return;
+   useEffect(() => {
+      if (!socket) return;
 
         const handleMessageReceived = (newMessage: Message) => {
-             if (newMessage.channel === 'SMS' && selectedContact && newMessage.lead_id === selectedContact.id) {
+            // Update the messages list *only* if it's a SMS message and for the selected contact.
+            if (newMessage.channel === 'SMS' && selectedContact && newMessage.lead_id === selectedContact.id) {
                 setMessages(prevMessages => [...prevMessages, newMessage]);
             }
         };
@@ -64,7 +65,6 @@ export function SMSView({ theme, leads }: SMSViewProps) {
             await messageService.sendMessage(leadId, channel, text);
             // Fetch all the messages.
             fetchMessages(leadId);
-
         } catch (error: any) {
             console.error("Error sending message:", error);
             setError(error.message || 'Failed to send message');  // Update error state
@@ -207,7 +207,7 @@ export function SMSView({ theme, leads }: SMSViewProps) {
                                         theme === 'dark'
                                             ? 'bg-gray-700 border-gray-600 text-white'
                                             : 'bg-gray-50 border-gray-300 text-gray-900'
-                                    } border rounded-lg focus:outline-none focus:border-blue-500`}
+                                    } border rounded-lg focus:outline-none focus:border-red-500`}
                                     placeholder="Ask about the data in the chat box..."
                                 />
                             </div>

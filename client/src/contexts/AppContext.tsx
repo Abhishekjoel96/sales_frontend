@@ -1,15 +1,17 @@
 // src/contexts/AppContext.tsx
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Lead } from '../models/Lead';
 import { Appointment } from '../models/Appointment';
 import { CallLog } from '../models/CallLog';
 import { Message } from '../models/Message';
 import { AISettings } from '../models/AISettings';
-import * as leadService from '../services/leadService';
+import * as leadService from '../services/leadService'; // Import lead service
 import * as messageService from '../services/messageService';
-import * as calendarService from '../services/calendarService';
+import * as appointmentService from '../services/appointmentService';
 import * as callService from '../services/callService';
+
+
 
 interface AppContextType {
     leads: Lead[];
@@ -27,10 +29,10 @@ interface AppContextType {
     setTheme: React.Dispatch<React.SetStateAction<'dark' | 'light'>>;
     aiSettings: AISettings[];
     setAiSettings: React.Dispatch<React.SetStateAction<AISettings[]>>;
-    fetchData: () => Promise<void>;
+    fetchData: () => Promise<void>; // Add this
 }
 
-export const AppContext = createContext<AppContextType | undefined>(undefined); //Corrected export
+export const AppContext = createContext<AppContextType | undefined>(undefined); // Corrected export
 
 interface AppProviderProps {
     children: ReactNode;
@@ -47,24 +49,31 @@ export function AppProvider({ children }: AppProviderProps) {  //Corrected expor
     const [theme, setTheme] = useState<'dark' | 'light'>('dark'); // Example: Initial theme state
     const [aiSettings, setAiSettings] = useState<AISettings[]>([]);
 
-    // Initial data fetching (example with leads - do the same for appointments, etc.)
-     const fetchData = async () => {
-        setIsLoading(true)
-        try{
-            const fetchedLeads = await leadService.getLeads()
-            setLeads(fetchedLeads);
-        }
-        catch(error: any){
-            setError(error.message || "Failed to fetch the data")
-        }
-        finally{
-            setIsLoading(false);
-        }
-    }
+      const fetchData = useCallback(async () => {
+        try {
+          setLoading(true);
+          // Fetch all initial data concurrently
+          const [fetchedLeads, fetchedAppointments, fetchedCallLogs] = await Promise.all([
+            leadService.getLeads(),
+            appointmentService.getAllAppointments(),
+            callService.getAllCallLogs(),
+          ]);
 
-    useEffect(() => {
-       fetchData();
-    }, []);
+          setLeads(fetchedLeads);
+          setAppointments(fetchedAppointments);
+          setCallLogs(fetchedCallLogs);
+
+          setError(null);
+        } catch (error: any) {
+          setError(error.message || 'Failed to fetch data');
+        } finally {
+          setLoading(false);
+        }
+      }, []);
+
+        useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
 
     useEffect(() => {
@@ -136,7 +145,8 @@ export function AppProvider({ children }: AppProviderProps) {  //Corrected expor
          });
 
          newSocket.on('dashboard_updated', (dashboardData: any) => { //Not implemented yet
-             // Handle dashboard updates.
+             // Handle dashboard updates.  This assumes your backend sends *all* dashboard data.
+             // You'd likely have more specific state variables for different parts of the dashboard.
          });
 
          newSocket.on('ai_settings_updated', (updatedSettings: AISettings[])=>{

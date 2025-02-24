@@ -31,9 +31,8 @@ export const useMessages = (leadId: string, channel: string) => {
         fetchMessages();
     }, [fetchMessages]);
 
-     useEffect(() => {
+    useEffect(() => {
         if (!socket) return;
-
         const handleMessageReceived = (newMessage: Message) => {
             if (newMessage.channel === channel && newMessage.lead_id === leadId) {
                 setMessages(prevMessages => [...prevMessages, newMessage]);
@@ -41,7 +40,6 @@ export const useMessages = (leadId: string, channel: string) => {
         };
 
         socket.on('message_received', handleMessageReceived);
-
         return () => {
             socket.off('message_received', handleMessageReceived);
         };

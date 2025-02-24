@@ -3,11 +3,11 @@ import axios from 'axios';
 import config from '../../../backend/src/config/config';
 
 const api = axios.create({
-    baseURL: 'https://sales-project-1.onrender.com/api', // Your Render backend URL
-    headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': config.apiKey,  // Use the API key from the backend config
-    },
+   baseURL: import.meta.env.VITE_BACKEND_URL || 'https://sales-project-1.onrender.com/api', // Correct way
+   headers: {
+       'Content-Type': 'application/json',
+       'X-API-Key': import.meta.env.VITE_API_KEY,  // Correct way
+   },
 });
 
 export default api;

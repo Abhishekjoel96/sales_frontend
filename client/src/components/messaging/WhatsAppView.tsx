@@ -5,8 +5,8 @@ import * as messageService from '../../services/messageService';
 import { Message } from '../../models/Message';
 import { Lead } from '../../models/Lead';
 import Chat from './Chat';  // Import the Chat component
-import { io, Socket } from 'socket.io-client';
 import { useApp } from '../../contexts/AppContext';
+import { io, Socket } from 'socket.io-client';
 
 interface WhatsAppViewProps {
     theme: 'dark' | 'light';
@@ -19,7 +19,7 @@ export function WhatsAppView({ theme, leads }: WhatsAppViewProps) {
     const [showAIPopup, setShowAIPopup] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { socket } = useApp(); // Access socket from context
+    const { socket, setMessages: setGlobalMessages } = useApp(); // Access socket from context
 
     // Use useCallback to prevent unnecessary re-renders of fetchMessages
     const fetchMessages = useCallback(async (leadId: string) => {
@@ -46,10 +46,10 @@ export function WhatsAppView({ theme, leads }: WhatsAppViewProps) {
         if (!socket) return; // Don't proceed if socket hasn't been initialized
 
         const handleMessageReceived = (newMessage: Message) => {
-          //Only add the message if it's a WhatsApp message AND for the currently selected lead
-          if (newMessage.channel === 'WhatsApp' && selectedLead && newMessage.lead_id === selectedLead.id) {
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
-          }
+            // Update the messages list *only* if it's a WhatsApp message AND for the currently selected lead.
+            if (newMessage.channel === 'WhatsApp' && selectedLead && newMessage.lead_id === selectedLead.id) {
+                setMessages(prevMessages => [...prevMessages, newMessage]);
+            }
         };
 
         socket.on('message_received', handleMessageReceived);
@@ -57,12 +57,13 @@ export function WhatsAppView({ theme, leads }: WhatsAppViewProps) {
         return () => {
             socket.off('message_received', handleMessageReceived); // Clean up listener
         };
-    }, [selectedLead, socket]); // Depend on selectedLead and socket, so the effect runs when it changes
+    }, [selectedLead, socket]); // Depend on selectedLead and socket
+
 
     const handleSendMessage = async (text: string, leadId: string, channel: string) => {
         try {
             await messageService.sendMessage(leadId, channel, text);
-             // Fetch all the messages.
+            // Fetch all the messages.
             fetchMessages(leadId)
         } catch (error: any) {
             console.error("Error sending message:", error);
@@ -152,7 +153,7 @@ export function WhatsAppView({ theme, leads }: WhatsAppViewProps) {
                         <div className="flex items-center justify-between">
                           <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                             {lead.name}
-                          </h3>
+                        </h3>
                         </div>
                         <div className="flex items-center justify-between mt-1">
                           <p className={`text-sm truncate ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>

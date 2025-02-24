@@ -3,6 +3,7 @@
 import api from '../config/api';
 import { Appointment } from '../models/Appointment';
 
+
 export const createAppointment = async (appointmentData: Omit<Appointment, 'id' | 'created_at' | 'updated_at'>): Promise<Appointment> => {
     const response = await api.post('/calendar', appointmentData);
     return response.data;

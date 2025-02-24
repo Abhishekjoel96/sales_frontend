@@ -5,10 +5,10 @@ import { SMSView } from '../components/messaging/SMSView';
 import { EmailView } from '../components/messaging/EmailView';
 import { useApp } from '../contexts/AppContext';
 
+
 const MessagingPage: React.FC = () => {
     const [activeChannel, setActiveChannel] = useState<'WhatsApp' | 'SMS' | 'Email'>('WhatsApp');
     const { theme, leads } = useApp();
-
 
     return (
         <>
@@ -40,4 +40,4 @@ const MessagingPage: React.FC = () => {
     );
 };
 
-export default MessagingPage;
+export default MessagingPage;;

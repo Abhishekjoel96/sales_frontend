@@ -9,7 +9,7 @@ export const sendMessage = async (leadId: string, channel: 'WhatsApp' | 'SMS' | 
 
 //Gets the messages by channel and lead Id
 export const getMessagesByChannelAndLeadId = async (leadId: string, channel: 'WhatsApp' | 'SMS' | 'Email'): Promise<Message[]> => {
-    const response = await api.get(`/messages?lead_id=${leadId}&channel=${channel}`);
+    const response = await api.get(`/messages?lead_id=<span class="math-inline">\{leadId\}&channel\=</span>{channel}`);
     return response.data;
 }
 

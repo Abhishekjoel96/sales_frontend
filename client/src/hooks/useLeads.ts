@@ -19,7 +19,7 @@ export const useLeads = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, []); // Add getLeads to the dependency array
 
     useEffect(() => {
         fetchLeads();

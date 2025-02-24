@@ -1,9 +1,10 @@
 // src/hooks/useMessages.ts
+
 import { useState, useEffect, useCallback } from 'react';
 import * as messageService from '../services/messageService';
 import { Message } from '../models/Message';
 
-export const useMessages = (leadId: string, channel: string) => {
+export const useMessages = (leadId: string, channel: string) => { // Add leadId and channel
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

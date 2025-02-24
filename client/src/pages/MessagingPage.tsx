@@ -10,6 +10,7 @@ const MessagingPage: React.FC = () => {
     const [activeChannel, setActiveChannel] = useState<'WhatsApp' | 'SMS' | 'Email'>('WhatsApp');
     const { theme, leads } = useApp();
 
+
     return (
         <>
             <div className="flex border-b border-gray-700">
@@ -40,4 +41,4 @@ const MessagingPage: React.FC = () => {
     );
 };
 
-export default MessagingPage;;
+export default MessagingPage;

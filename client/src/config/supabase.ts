@@ -1,16 +1,11 @@
-
 // src/config/supabase.ts
-import { createClient } from '@supabase/supabase-js';
+// For this project Supabase is only used in backend.
+import { createClient } from '@supabase/supabase-js';  // Corrected import
 
-// These should be defined in your .env file, even if you don't use them here.
-// Using VITE_ prefix for frontend environment variables.
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;  // Corrected: Use import.meta.env
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY; // Corrected
 
-
-// Initialize the Supabase client ONLY if the environment variables are present.
-// This prevents errors if you're not using Supabase on the frontend.
-let supabase: any = null; // Use 'any' for now, since we may not initialize
+let supabase: any = null;
 
 if (supabaseUrl && supabaseAnonKey) {
   supabase = createClient(supabaseUrl, supabaseAnonKey);

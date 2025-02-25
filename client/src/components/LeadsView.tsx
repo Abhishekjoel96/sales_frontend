@@ -1,16 +1,18 @@
 // src/components/LeadsView.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserPlus, Search, Filter, SortAsc, Mail, Phone, Building2, Factory, Globe2, Calendar, X, Check, Pencil, Trash2 } from 'lucide-react'; // Corrected imports
+import { UserPlus, Search, Filter, SortAsc, Mail, Phone, Building, Globe, Calendar, X, Check, Pencil, Trash2, Factory } from 'lucide-react'; // Corrected Imports
 import * as leadService from '../services/leadService';
 import { Lead } from '../models/Lead';
-import { useDebounce } from '../hooks/useDebounce'; // Import useDebounce
+import { useDebounce } from '../hooks/useDebounce'; // Import
 import { useApp } from '../contexts/AppContext';
+
 
 interface LeadsViewProps {
     theme: 'dark' | 'light';
-    leads: Lead[]; // Receive leads as a prop
-    setLeads: (leads: Lead[]) => void; // To update leads in context
+    leads: Lead[];
+    setLeads: (leads: Lead[]) => void;
 }
+
 
 interface EditableFieldProps {
     value: string | null | undefined;
@@ -64,36 +66,34 @@ function EditableField({ value, isEditing, onEdit, theme, type = 'text', onClick
 }
 
 
-export function LeadsView({ theme, leads, setLeads }: LeadsViewProps) {
+export function LeadsView({ theme, leads, setLeads }: LeadsViewProps) {  //Corrected props
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [editingCell, setEditingCell] = useState<{ leadId: string; field: keyof Lead } | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [filterStatus, setFilterStatus] = useState<string | null>(null);
-    const [sortField, setSortField] = useState<keyof Lead | null>(null);
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [sortField, setSortField] = useState<keyof Lead | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [newLead, setNewLead] = useState<Omit<Lead, 'id' | 'created_at' | 'updated_at'>>({
         name: '',
         phone_number: '',
         email: '',
         region: '',
-        source: '',  // Ensure 'source' is included and initialized
+        source: '',
         status: 'New',
         company: '',
         industry: ''
     });
-     const { socket } = useApp();
+    const { socket } = useApp(); // Access socket from context
     const debouncedSearchQuery = useDebounce(searchQuery, 300); // 300ms debounce
 
 
-    //removed usecallback
-
-     const fetchLeads = useCallback(async () => {
+      const fetchLeads = useCallback(async () => {
         try {
             setLoading(true);
             const data = await leadService.getLeads();
-            setLeads(data); // Update leads using setLeads from props
+            setLeads(data);
             setError(null);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch leads');
@@ -102,41 +102,9 @@ export function LeadsView({ theme, leads, setLeads }: LeadsViewProps) {
         }
     }, [setLeads]);
 
-
-      useEffect(() => {
+    useEffect(() => {
         fetchLeads();
-          // Set up WebSocket connection
-          if(socket){
-            socket.on('connect', () => {
-              console.log('Connected to WebSocket');
-            });
-
-            socket.on('lead_added', (newLead: Lead) => {
-                setLeads((prevLeads: Lead[]) => [...prevLeads, newLead]);
-            });
-
-              socket.on('lead_updated', (updatedLead: Lead) => {
-                setLeads(prevLeads =>
-                  prevLeads.map((lead) =>
-                    lead.id === updatedLead.id ? updatedLead : lead
-                  )
-                );
-              });
-
-               socket.on('lead_deleted', (deletedLeadId:string) => {
-                 setLeads((prevLeads: Lead[]) => prevLeads.filter((lead) => lead.id !== deletedLeadId));
-               });
-          }
-
-
-        return () => {
-            if(socket){
-                socket.off('lead_added');
-                socket.off('lead_updated');
-                socket.off('lead_deleted');
-            }
-        };
-    }, [fetchLeads, socket]);
+    }, [fetchLeads]);
 
      const handleCellEdit = async (leadId: string, field: keyof Lead, value: string) => {
         try {
@@ -154,7 +122,6 @@ export function LeadsView({ theme, leads, setLeads }: LeadsViewProps) {
         } catch (error: any) {
             console.error("Error updating lead:", error);
             setError("Failed to update lead.");
-             // Re-fetch on error (to revert optimistic update).  In a real app, you'd have more sophisticated error handling
             fetchLeads();
         }
     };
@@ -164,12 +131,12 @@ export function LeadsView({ theme, leads, setLeads }: LeadsViewProps) {
              // Instead of updating local state directly, rely on the WebSocket event.
             // setLeads(prevLeads => [...prevLeads, createdLead]); // Optimistic update REMOVED
             setShowAddModal(false);
-            setNewLead({
+            setNewLead({ //reset the form
                 name: '',
                 phone_number: '',
                 email: '',
                 region: '',
-                source: '', // Reset source
+                source: '',
                 status: 'New',
                 company: '',
                 industry: ''
@@ -182,19 +149,19 @@ export function LeadsView({ theme, leads, setLeads }: LeadsViewProps) {
     const handleDeleteLead = async (leadId: string) => {
         if (window.confirm('Are you sure you want to delete this lead?')) {
             try {
-                 // Optimistically update the UI *before* the API call.
+                // Optimistically update the UI *before* the API call.
                 setLeads(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
                 await leadService.deleteLead(leadId);
-                // Don't refetch here. rely on websocket.
+                // Don't refetch here. rely on the websocket
 
             } catch (error: any) {
                 setError(error.message || 'Failed to delete lead');
-                fetchLeads();
+                fetchLeads();  // Re-fetch on error (to revert optimistic update)
             }
         }
     };
 
-    // Filtering and Sorting
+      // Filtering and Sorting
 
     const filteredLeads = leads.filter(lead =>
       (lead.name && lead.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) ||
@@ -212,27 +179,32 @@ export function LeadsView({ theme, leads, setLeads }: LeadsViewProps) {
 
         if (aValue === null) return 1;
         if (bValue === null) return -1;
+        if (aValue === undefined) return 1;
+        if (bValue === undefined) return -1;
 
-        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+            return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        }
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+            return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+
         return 0;
     });
 
     const getStatusIcon = (status: Lead['status']) => {
         switch (status) {
             case 'Hot':
-                return <Flame className="w-4 h-4 text-red-500" />; // Use text-red-500
+                return <i className="fa-solid fa-fire" style= {{color:"#f15704"}}></i>
             case 'Warm':
-                return <TrendingUp className="w-4 h-4 text-yellow-500" />; // Use text-yellow-500
+                return  <i className="fa-solid fa-temperature-half" style={{color: "#f59209"}}></i>
             case 'Cold':
-                return <Snowflake className="w-4 h-4 text-blue-500" />; //Use text-blue-500
-            case 'New':
-                return <UserPlus className="w-4 h-4 text-gray-500"/>
+              return <i className="fa-solid fa-snowflake" style={{color: "#0dcaf0"}}></i>
             default:
-                return null;
-        }
+              return null;
+          }
     };
-
 
      const getStatusColor = (status: Lead['status']) => {
         switch (status) {
@@ -242,12 +214,40 @@ export function LeadsView({ theme, leads, setLeads }: LeadsViewProps) {
                 return 'bg-yellow-500/20 text-yellow-500'; // Use text-yellow-500
             case 'Cold':
                 return 'bg-blue-500/20 text-blue-500'; // Use text-blue-500
-            case 'New':
+             case 'New':
                  return 'bg-gray-500/20 text-gray-500';
             default:
                 return '';
         }
     };
+
+    useEffect(() => {
+      if (socket) {
+          socket.on('lead_added', (newLead: Lead) => {
+              setLeads(prevLeads => [...prevLeads, newLead]);
+          });
+
+          socket.on('lead_updated', (updatedLead: Lead) => {
+              setLeads(prevLeads =>
+                  prevLeads.map(lead =>
+                      lead.id === updatedLead.id ? updatedLead : lead
+                  )
+              );
+          });
+
+          socket.on('lead_deleted', (deletedLeadId: string) => {
+            setLeads(prevLeads => prevLeads.filter(lead => lead.id !== deletedLeadId));
+          });
+      }
+    return () => {
+          if(socket){
+            socket.off('lead_added');
+            socket.off('lead_updated');
+            socket.off('lead_deleted');
+          }
+        };
+
+    },[socket, setLeads])
 
     if (loading) {
         return <div>Loading leads...</div>;
@@ -430,12 +430,13 @@ export function LeadsView({ theme, leads, setLeads }: LeadsViewProps) {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                      <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2">
                                         <Calendar className="w-4 h-4 text-gray-400" />
+                                        {/*Display created_at */}
                                         <span className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                                             {lead.created_at}
                                         </span>
-                                      </div>
+                                       </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <button

@@ -6,12 +6,10 @@ import { Appointment } from '../models/Appointment';
 import { CallLog } from '../models/CallLog';
 import { Message } from '../models/Message';
 import { AISettings } from '../models/AISettings';
-import * as leadService from '../services/leadService'; // Import lead service
+import * as leadService from '../services/leadService';
 import * as messageService from '../services/messageService';
-import * as appointmentService from '../services/appointmentService';
+import * as calendarService from '../services/calendarService';
 import * as callService from '../services/callService';
-
-
 
 interface AppContextType {
     leads: Lead[];
@@ -49,30 +47,23 @@ export function AppProvider({ children }: AppProviderProps) {  //Corrected expor
     const [theme, setTheme] = useState<'dark' | 'light'>('dark'); // Example: Initial theme state
     const [aiSettings, setAiSettings] = useState<AISettings[]>([]);
 
-      const fetchData = useCallback(async () => {
-        try {
-          setLoading(true);
-          // Fetch all initial data concurrently
-          const [fetchedLeads, fetchedAppointments, fetchedCallLogs] = await Promise.all([
-            leadService.getLeads(),
-            appointmentService.getAllAppointments(),
-            callService.getAllCallLogs(),
-          ]);
-
-          setLeads(fetchedLeads);
-          setAppointments(fetchedAppointments);
-          setCallLogs(fetchedCallLogs);
-
-          setError(null);
-        } catch (error: any) {
-          setError(error.message || 'Failed to fetch data');
-        } finally {
-          setLoading(false);
+    // Initial data fetching (example with leads - do the same for appointments, etc.)
+     const fetchData = useCallback(async () => {
+        setIsLoading(true)
+        try{
+            const fetchedLeads = await leadService.getLeads()
+            setLeads(fetchedLeads);
         }
-      }, []);
+        catch(error: any){
+            setError(error.message || "Failed to fetch the data")
+        }
+        finally{
+            setIsLoading(false);
+        }
+    }, []);
 
-        useEffect(() => {
-        fetchData();
+    useEffect(() => {
+       fetchData();
     }, [fetchData]);
 
 

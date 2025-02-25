@@ -1,36 +1,27 @@
 // src/services/appointmentService.ts
-import {
-    createAppointment,
-    getAppointments,
-    getAppointmentById,
-    updateAppointment,
-    deleteAppointment,
-    Appointment,
-  } from '../models/Appointment'; //Corrected
-  import { isWithinInterval, parseISO, addMinutes, subMinutes } from 'date-fns';
+import api from '../config/api';
+import { Appointment } from '../models/Appointment';
 
-  export const createNewAppointment = async (
-    appointmentData: Omit<Appointment, 'id' | 'created_at' | 'updated_at'>
-  ): Promise<Appointment> => {
-    return createAppointment(appointmentData);
-  };
+export const createAppointment = async (appointmentData: Omit<Appointment, 'id' | 'created_at' | 'updated_at'>): Promise<Appointment> => {
+    const response = await api.post('/calendar', appointmentData);
+    return response.data;
+};
 
-  export const getAllAppointments = async (): Promise<Appointment[]> => {
-    return getAppointments();
-  };
+export const getAllAppointments = async (): Promise<Appointment[]> => {
+    const response = await api.get('/calendar');
+    return response.data;
+};
 
-  export const getAppointment = async (id: string): Promise<Appointment> => {
-    return getAppointmentById(id);
-  };
+export const getAppointmentById = async (id: string): Promise<Appointment> => {
+    const response = await api.get(`/calendar/${id}`);
+    return response.data;
+};
 
-  export const updateExistingAppointment = async (
-    id: string,
-    updateData: Partial<Omit<Appointment, 'id' | 'created_at'>>
-  ): Promise<Appointment> => {
-    return updateAppointment(id, updateData)
-  };
+export const updateAppointment = async (id: string, updateData: Partial<Omit<Appointment, 'id' | 'created_at'>>): Promise<Appointment> => {
+    const response = await api.put(`/calendar/${id}`, updateData);
+    return response.data;
+};
 
-
-  export const deleteExistingAppointment = async (id: string): Promise<void> => {
-    return deleteAppointment(id);
-  };
+export const deleteAppointment = async (id: string): Promise<void> => {
+    await api.delete(`/calendar/${id}`);
+};

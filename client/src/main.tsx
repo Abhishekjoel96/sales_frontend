@@ -2,7 +2,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import './styles.css'; // Import global styles (Tailwind setup)
+import './styles.css';
 import { AppProvider } from './contexts/AppContext';
 
 const rootElement = document.getElementById('root');

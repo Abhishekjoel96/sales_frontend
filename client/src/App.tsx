@@ -1,3 +1,4 @@
+// src/App.tsx
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
 import {

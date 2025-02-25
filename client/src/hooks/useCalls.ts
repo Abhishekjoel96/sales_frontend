@@ -26,7 +26,6 @@ export const useCalls = () => {
     useEffect(() => {
         fetchCalls();
     }, [fetchCalls]);
-
     useEffect(() => {
         if(!socket) return;
         socket.on('call_initiated', (newCall: CallLog) => {
@@ -54,7 +53,7 @@ export const useCalls = () => {
             socket.off('call_updated')
             socket.off('call_transcribed')
         };
-    }, [socket]);
+    }, [socket]); // Correct Dependency
 
     return { calls, loading, error, refetch: fetchCalls };
 };

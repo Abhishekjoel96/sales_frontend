@@ -7,7 +7,7 @@ import { useApp } from '../contexts/AppContext';
 const AnalyticsPage: React.FC = () => {
     const { theme } = useApp();
   return (
-     <AnalyticsView theme={theme}/>
+     <AnalyticsView theme={theme} />
   )
 }
 

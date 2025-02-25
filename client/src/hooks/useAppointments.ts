@@ -8,7 +8,7 @@ export const useAppointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { socket } = useApp();
+    const { socket } = useApp(); // Access the socket from the context
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -27,8 +27,8 @@ export const useAppointments = () => {
     fetchAppointments();
   }, [fetchAppointments]);
 
-  useEffect(() => {
-        if(!socket) return;
+    useEffect(() => {
+        if(!socket) return; // Don't do anything if socket isn't set up yet
         socket.on('appointment_created', (newAppointment: Appointment) => {
             setAppointments(prevAppointments => [...prevAppointments, newAppointment]);
         });
@@ -46,13 +46,13 @@ export const useAppointments = () => {
              prevAppointments.filter((appointment) => appointment.id !== deletedAppointmentId)
            );
         });
-
         return () => {
-            socket.off('appointment_created');
-            socket.off('appointment_updated');
-            socket.off('appointment_deleted');
+          socket.off('appointment_created');
+          socket.off('appointment_updated');
+          socket.off('appointment_deleted');
         }
-    }, [socket])
+
+    }, [socket]) // Depend on socket
 
   return { appointments, loading, error, refetch: fetchAppointments };
 };

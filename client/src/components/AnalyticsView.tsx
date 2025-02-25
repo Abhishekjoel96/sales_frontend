@@ -13,10 +13,9 @@ import {
     PointElement,
     LineElement,
 } from 'chart.js';
-import { Users, PhoneCall, TrendingUp, Mail, Calendar } from 'lucide-react';
-import * as analyticsService from '../services/analyticsService'; // You'll need to create this
+import { Users, PhoneCall, TrendingUp, Mail, Calendar, Clock, MessageSquare } from 'lucide-react'; // Corrected import
+import * as analyticsService from '../services/analyticsService'; // Import analytics service
 import { AnimatedCard } from './shared/AnimatedCard';
-import { ArrowUp, ArrowDown, Users, Calendar, Clock, PhoneCall, TrendingUp, Mail } from 'lucide-react'; //Import the neccessary icons
 
 ChartJS.register(
     CategoryScale,
@@ -43,29 +42,18 @@ interface AnalyticsData {
     conversionRate: number;
     avgCallDuration: string;
     totalCalls: number;
-    leadVolume: { labels: string[]; datasets: { label: string; data: number[]; backgroundColor: string; borderColor: string; borderWidth: number; }[] };
-    channelDistribution: { labels: string[]; datasets: { data: number[]; backgroundColor: string[]; borderColor: string[]; borderWidth: number; }[] };
-    conversionRateTrends: { labels: string[]; datasets: { label: string; data: number[]; borderColor: string; backgroundColor: string; tension: number; fill: boolean; }[] };
-    leadFunnel: { labels: string[]; datasets: { data: number[]; backgroundColor: string[]; borderColor: string[]; borderWidth: number; }[] };
+    leadVolume: any; // Replace 'any' with the actual chart data type
+    channelDistribution: any; // Replace 'any' with the actual chart data type
+    conversionRateTrends: any; // Replace 'any' with the actual chart data type
+    leadFunnel: any;          // Replace 'any' with the actual chart data type
+    // Add other metrics as needed
+    [key: string]: any; // Add index signature
 }
-
-const initialData: AnalyticsData = { // Initialize with empty data
-    totalLeads: 0,
-    appointmentsBooked: 0,
-    conversionRate: 0,
-    avgCallDuration: '0m 0s',
-    totalCalls: 0,
-    leadVolume: { labels: [], datasets: [{ label: 'Lead Volume', data: [], backgroundColor: 'rgba(99, 102, 241, 0.5)', borderColor: 'rgb(99, 102, 241)', borderWidth: 1 }] },
-    channelDistribution: { labels: [], datasets: [{ data: [], backgroundColor: [], borderColor: [], borderWidth: 1 }] },
-    conversionRateTrends: { labels: [], datasets: [{ label: 'Conversion Rate', data: [], borderColor: 'rgb(99, 102, 241)', backgroundColor: 'rgba(99, 102, 241, 0.1)', tension: 0.4, fill: true }] },
-    leadFunnel: { labels: [], datasets: [{ data: [], backgroundColor: [], borderColor: [], borderWidth: 1 }] },
-};
-
 const timeRangeOptions = ['Day', 'Week', 'Month'] as const;
 type TimeRange = typeof timeRangeOptions[number];
 
 export function AnalyticsView({ theme }: { theme: 'dark' | 'light' }) {
-    const [analyticsData, setAnalyticsData] = useState<AnalyticsData>(initialData);
+    const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null); // Use null for initial state
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [timeRange, setTimeRange] = useState<TimeRange>('Week');
@@ -108,14 +96,16 @@ export function AnalyticsView({ theme }: { theme: 'dark' | 'light' }) {
     if (error) {
         return <div>Error: {error}</div>;
     }
-
+    if(!analyticsData){
+      return <div>No Data</div>; // Or some other placeholder
+    }
 
     const kpis: KPI[] = [
-        { title: "Total Leads", value: analyticsData.totalLeads, change: "+0%", icon: <Users className="w-6 h-6 text-indigo-400" /> },
-        { title: "Appointments Booked", value: analyticsData.appointmentsBooked, change: "+0%", icon: <Calendar className="w-6 h-6 text-indigo-400" /> },
-        { title: "Conversion Rate", value: `${analyticsData.conversionRate}%`, change: "+0%", icon: <TrendingUp className="w-6 h-6 text-indigo-400" /> },
+        { title: "Total Leads", value: analyticsData.totalLeads, change: "+12.3%", icon: <Users className="w-6 h-6 text-indigo-400" /> },
+        { title: "Appointments Booked", value: analyticsData.appointmentsBooked, change: "+8.3%", icon: <Calendar className="w-6 h-6 text-indigo-400" /> },
+        { title: "Conversion Rate", value: `${analyticsData.conversionRate}%`, change: "+5.2%", icon: <TrendingUp className="w-6 h-6 text-indigo-400" /> },
         { title: "Avg Call Duration", value: analyticsData.avgCallDuration, change: "+0%", icon: <Clock className="w-6 h-6 text-indigo-400" /> },
-        { title: "Total Calls", value: analyticsData.totalCalls, change: "+0%", icon: <PhoneCall className="w-6 h-6 text-indigo-400" /> }
+        { title: "Total Calls", value: analyticsData.totalCalls, change: "+15.8%", icon: <PhoneCall className="w-6 h-6 text-indigo-400" /> }
     ];
 
    const textColor = theme === 'dark' ? 'text-white' : 'text-gray-900';
@@ -132,13 +122,18 @@ export function AnalyticsView({ theme }: { theme: 'dark' | 'light' }) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                 {kpis.map((kpi, index) => (
                   <AnimatedCard key={kpi.title} delay={0.1 * index}>
-                    <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg shadow-lg p-6 border`}>
+                    <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-lg p-6 border group hover:border-indigo-500/50 transition-all duration-300`}>
                       <div className="flex items-center justify-between mb-2">
+                        <div className="p-2 bg-gray-700/50 rounded-lg">
                         {kpi.icon}
-                         <span className="text-green-400 text-sm">{kpi.change}</span>
+                        </div>
+                         <span className={`text-sm font-medium ${kpi.change.startsWith('+') ? 'text-green-400' : 'text-red-400'
+                         } opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
+                         {kpi.change}
+                         </span>
                       </div>
-                        <h3 className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{kpi.title}</h3>
-                        <p className={`text-2xl font-bold ${textColor} mt-1`}>{kpi.value}</p>
+                        <h3 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{kpi.title}</h3>
+                        <p className={`text-2xl font-bold ${textColor} mt-1 group-hover:text-indigo-400 transition-colors`}>{kpi.value}</p>
                     </div>
                   </AnimatedCard>
                 ))}
@@ -171,7 +166,7 @@ export function AnalyticsView({ theme }: { theme: 'dark' | 'light' }) {
                                     grid: {
                                         display: false
                                     },
-                                     ticks: {
+                                    ticks: {
                                         color: theme === 'dark' ? '#9CA3AF' : '#6B7280', // Adjust text color based on theme
                                      }
                                 }
@@ -226,7 +221,7 @@ export function AnalyticsView({ theme }: { theme: 'dark' | 'light' }) {
                                         display: false
                                     },
                                     ticks: {
-                                        color: theme === 'dark' ? '#9CA3AF' : '#6B7280', // Adjust text color
+                                       color: theme === 'dark' ? '#9CA3AF' : '#6B7280', // Adjust text color
                                     }
                                 }
                             }

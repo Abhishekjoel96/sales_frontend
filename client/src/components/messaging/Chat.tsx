@@ -1,6 +1,6 @@
 // src/components/messaging/Chat.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Smile, Paperclip } from 'lucide-react';  //Removed MoreVertical
+import { Send, Smile, Paperclip } from 'lucide-react'; //Corrected import
 import { Message } from '../../models/Message';
 
 interface ChatProps {
@@ -10,7 +10,7 @@ interface ChatProps {
   theme: 'dark' | 'light';
 }
 
-export function Chat({ contact, messages, onSendMessage, theme }: ChatProps) { //Removed export default
+function Chat({ contact, messages, onSendMessage, theme }: ChatProps) {
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

@@ -8,7 +8,7 @@ export const useLeads = () => {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const {socket} = useApp();
+    const { socket } = useApp();
 
     const fetchLeads = useCallback(async () => {
         try {
@@ -21,7 +21,7 @@ export const useLeads = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [setLeads]);
 
     useEffect(() => {
         fetchLeads();
@@ -45,14 +45,13 @@ export const useLeads = () => {
                 setLeads(prevLeads => prevLeads.filter(lead => lead.id !== deletedLeadId));
             });
         }
-
-     return () => {
-        if(socket){
-          socket.off('lead_added');
-          socket.off('lead_updated');
-          socket.off('lead_deleted');
-        }
-      };
+        return () => {
+          if(socket){
+            socket.off('lead_added');
+            socket.off('lead_updated');
+            socket.off('lead_deleted');
+          }
+        };
     }, [socket, setLeads]);
 
     return { leads, loading, error, refetch: fetchLeads };

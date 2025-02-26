@@ -1,600 +1,520 @@
 // src/components/LeadsView.tsx
-
 import React, { useState, useEffect, useCallback } from 'react';
-import { useApp } from '../contexts/AppContext';
+import { Plus, Search, User, Phone, Mail, Edit, Trash2, X } from 'lucide-react';
 import { Lead } from '../models/Lead';
 import * as leadService from '../services/leadService';
-import { Plus, Search, Edit, Trash2, FileDown, FileUp, X, User, Phone, Mail, Building, Globe, Check, AlertTriangle } from 'lucide-react';
-import { AnimatedCard } from './shared/AnimatedCard';
-import { format } from 'date-fns';
+import toast from 'react-hot-toast';
+import { useApp } from '../contexts/AppContext';
+
+interface LeadFormProps {
+    lead?: Lead | null;
+    onSave: (lead: Lead) => void;
+    onClose: () => void;
+    theme: 'dark' | 'light';
+}
+
+const LeadForm: React.FC<LeadFormProps> = ({ lead, onSave, onClose, theme }) => {
+    const [name, setName] = useState(lead?.name || '');
+    const [phoneNumber, setPhoneNumber] = useState(lead?.phone_number || '');
+    const [email, setEmail] = useState(lead?.email || '');
+    const [region, setRegion] = useState(lead?.region || '');
+    const [status, setStatus] = useState<Lead['status']>(lead?.status || 'New');
+    const [company, setCompany] = useState(lead?.company || '');
+    const [industry, setIndustry] = useState(lead?.industry || '');
+    const [source, setSource] = useState(lead?.source || '');
+    const [formError, setFormError] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
 
-interface LeadsViewProps {}
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        setFormError(null);
+        setIsSaving(true);
 
-const LeadsView: React.FC<LeadsViewProps> = () => {
-    const { leads, setLeads, theme, isLoading, error } = useApp();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [showAddLeadModal, setShowAddLeadModal] = useState(false);
-    const [showEditLeadModal, setShowEditLeadModal] = useState(false);
-    const [showImportModal, setShowImportModal] = useState(false); // Import modal
-    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-    const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
-    const [sortField, setSortField] = useState<'name' | 'created_at'>('created_at'); // Default sort by creation date
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-    const [selectedFile, setSelectedFile] = useState<File | null>(null); // State for CSV file handling
-    const [importError, setImportError] = useState<string | null>(null);
-
-    const [newLead, setNewLead] = useState<Lead>({
-        id: '',
-        name: '',
-        email: '',
-        phone_number: '',
-        company: '',
-        website: '',
-        status: 'new',
-        notes: '',
-        created_at: new Date().toISOString(),
-        last_contacted: null
-    });
-
-    // Editing
-    const [editLeadData, setEditLeadData] = useState<Lead>({
-        id: '',
-        name: '',
-        email: '',
-        phone_number: '',
-        company: '',
-        website: '',
-        status: 'new',
-        notes: '',
-        created_at: '',
-        last_contacted: null
-    });
-
-    const fetchLeads = useCallback(async () => {
-      try {
-            const fetchedLeads = await leadService.getAllLeads();
-            setLeads(fetchedLeads);
-        } catch (error: any) {
-            console.error("Failed to fetch leads:", error);
-        }
-    }, [setLeads]); // Include setLeads in the dependency array
-
-    useEffect(() => {
-        fetchLeads();
-    }, [fetchLeads]);
-
-    const handleAddLead = async () => {
-        try {
-          if (
-                !newLead.name.trim() ||
-                !newLead.email.trim() ||
-                !newLead.phone_number.trim()
-            ) {
-                alert('Please fill in all required fields (Name, Email, Phone).');
-                return;
-            }
-            const addedLead = await leadService.createLead(newLead);
-            setLeads(prevLeads => [addedLead, ...prevLeads]);
-            setShowAddLeadModal(false);
-            setNewLead({ // Reset the form
-                id: '',
-                name: '',
-                email: '',
-                phone_number: '',
-                company: '',
-                website: '',
-                status: 'new',
-                notes: '',
-                created_at: new Date().toISOString(),
-                last_contacted: null
-            });
-
-        } catch (error: any) {
-            console.error("Error adding lead:", error);
-            alert(`Error adding lead: ${error.message}`);
-        }
-    };
-
-        const handleEditLead = async () => {
-        try {
-             if (
-                !editLeadData.name.trim() ||
-                !editLeadData.email.trim() ||
-                !editLeadData.phone_number.trim()
-            ) {
-                alert('Please fill in all required fields (Name, Email, Phone).');
-                return;
-            }
-            const updatedLead = await leadService.updateLead(editLeadData.id, editLeadData);
-            // Update the local state
-            setLeads(prevLeads =>
-                prevLeads.map(lead => (lead.id === updatedLead.id ? updatedLead : lead))
-            );
-
-            setShowEditLeadModal(false);  // Close the modal
-            setEditLeadData({             // Clear the edit form
-                id: '', name: '', email: '', phone_number: '', company: '', website: '',
-                status: 'new', notes: '', created_at: '', last_contacted: null
-            });
-        } catch (error: any) {
-            console.error("Error updating lead:", error);
-        }
-    };
-
-    const handleDeleteLead = async (id: string) => {
-        try {
-            await leadService.deleteLead(id);
-            setLeads(prevLeads => prevLeads.filter(lead => lead.id !== id));
-        } catch (error : any) {
-            console.error("Error deleting lead:", error);
-        }
-        setShowDeleteConfirmation(false);
-    };
-
-
-  const sortedLeads = [...leads].sort((a, b) => {
-    const fieldA = a[sortField];
-    const fieldB = b[sortField];
-
-    let comparison = 0;
-    if (fieldA && fieldB) {
-        if (fieldA > fieldB) {
-            comparison = 1;
-        } else if (fieldA < fieldB) {
-            comparison = -1;
-        }
-    }
-    return sortDirection === 'asc' ? comparison : -comparison;
-});
-
-
-  const filteredLeads = sortedLeads.filter(lead =>
-        lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.phone_number.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const handleImportLeads = async () => {
-        if (!selectedFile) {
-            alert('Please select a CSV file to import.');
+        if (!name || !phoneNumber) {
+            setFormError('Name and phone number are required.');
+            setIsSaving(false);
             return;
         }
 
-        try {
-           setImportError(null); // Clear previous errors
-            const importedLeads = await leadService.importLeadsFromCSV(selectedFile);
+        const leadData: Omit<Lead, 'id' | 'created_at' | 'updated_at'> = {
+            name,
+            phone_number: phoneNumber,
+            email: email || null, // Allow null values
+            region: region || null,
+            status,
+            company: company || null,
+            industry: industry || null,
+            source
+        };
 
-            // Add new leads, avoiding duplicates based on a unique identifier (e.g., email)
-            setLeads(prevLeads => {
-                const existingEmails = new Set(prevLeads.map(lead => lead.email));
-                const newLeads = importedLeads.filter(lead => !existingEmails.has(lead.email));
-                return [...prevLeads, ...newLeads];
-            });
-          //  alert(`${importedLeads.length} leads imported successfully.`);
-            setShowImportModal(false); // Close modal after successful import
-              setSelectedFile(null);
-        } catch (error : any) {
-            console.error("Error importing leads:", error);
-            setImportError(error.message || "Failed to import leads. Please check the CSV format.");
+        try {
+            let savedLead: Lead;
+            if (lead) {
+                // Update existing lead
+                savedLead = await leadService.updateLead(lead.id, leadData);
+            } else {
+                // Create new lead
+                savedLead = await leadService.createLead(leadData);
+            }
+            onSave(savedLead); // update the parent
+            toast.success(lead ? 'Lead updated!' : 'Lead added!');
+            onClose();
+
+        } catch (error: any) {
+            setFormError(error.message || 'An error occurred while saving the lead.');
+
+        } finally {
+          setIsSaving(false);
         }
     };
 
-     const handleExportLeads = async () => {
-    try {
-      const csvData = await leadService.exportLeadsToCSV(leads);
-      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl p-6 w-full max-w-md`}>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        {lead ? 'Edit Lead' : 'Add Lead'}
+                    </h2>
+                  <button onClick={onClose} className={`p-1 rounded-full ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-200'} transition-colors`}>
+                    <X className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+                  </button>
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                   {formError && <p className="text-red-500 text-sm">{formError}</p>}
+                    <div>
+                        <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Name</label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className={`mt-1 block w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Phone Number</label>
+                        <input
+                            type="tel"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            className={`mt-1 block w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Email</label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className={`mt-1 block w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                        />
+                    </div>
+                     <div>
+                        <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Region</label>
+                        <input
+                            type="text"
+                            value={region}
+                            onChange={(e) => setRegion(e.target.value)}
+                            className={`mt-1 block w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                        />
+                    </div>
+                    <div>
+                      <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Status</label>
+                      <select
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value as Lead['status'])}
+                        className={`mt-1 block w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                      >
+                        <option value="New">New</option>
+                        <option value="Cold">Cold</option>
+                        <option value="Warm">Warm</option>
+                        <option value="Hot">Hot</option>
+                      </select>
+                   </div>
 
-      link.setAttribute('href', url);
-      link.setAttribute('download', 'leads.csv');
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error('Error exporting leads:', error);
+                    <div>
+                      <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Company</label>
+                      <input
+                        type="text"
+                        value={company}
+                        onChange={(e) => setCompany(e.target.value)}
+                        className={`mt-1 block w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                      />
+                    </div>
+                    <div>
+                       <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Industry</label>
+                       <input
+                         type="text"
+                         value={industry}
+                         onChange={(e) => setIndustry(e.target.value)}
+                         className={`mt-1 block w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                       />
+                    </div>
+                     <div>
+                       <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Source</label>
+                       <input
+                         type="text"
+                         value={source}
+                         onChange={(e) => setSource(e.target.value)}
+                         className={`mt-1 block w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                       />
+                    </div>
+                    <div className="flex justify-end">
+                        <button
+                            type="submit"
+                            disabled={isSaving}
+                            className={`px-4 py-2 text-sm font-medium ${
+                              isSaving ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'
+                            } text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
+                        >
+                           {isSaving ? (lead ? 'Updating...' : 'Adding...') : (lead ? 'Update Lead' : 'Add Lead')}
+                        </button>
+                         <button
+                            type="button"
+                            onClick={onClose}
+                            className={`ml-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${theme === 'dark' ? 'text-gray-300 bg-gray-700 hover:bg-gray-600' : 'text-gray-700 bg-gray-200 hover:bg-gray-300'}`}
+                            >
+                            Cancel
+                         </button>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+
+interface LeadsViewProps {
+    theme: 'dark' | 'light';
+    leads: Lead[];      // Receives leads.
+    setLeads: React.Dispatch<React.SetStateAction<Lead[]>>; // Receives setLeads
+}
+
+export function LeadsView({ theme, leads, setLeads }: LeadsViewProps) {  //Receives leads and setLeads
+    const [showLeadForm, setShowLeadForm] = useState(false);
+    const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const { socket } = useApp(); // Access the socket from the context
+
+    useEffect(() => {
+        if(!socket) return;
+        const handleLeadAdded = (newLead: Lead) => {
+            setLeads(prevLeads => [...prevLeads, newLead]);
+        };
+
+        const handleLeadUpdated = (updatedLead: Lead) => {
+            setLeads(prevLeads =>
+                prevLeads.map(lead =>
+                    lead.id === updatedLead.id ? updatedLead : lead
+                )
+            );
+        };
+
+        const handleLeadDeleted = (deletedLeadId: string) => {
+            setLeads(prevLeads => prevLeads.filter(lead => lead.id !== deletedLeadId));
+        };
+
+        socket.on('lead_added', handleLeadAdded);
+        socket.on('lead_updated', handleLeadUpdated);
+        socket.on('lead_deleted', handleLeadDeleted);
+
+        return () => {
+          if(socket){
+            socket.off('lead_added', handleLeadAdded);
+            socket.off('lead_updated', handleLeadUpdated);
+            socket.off('lead_deleted', handleLeadDeleted);
+          }
+        };
+    }, [socket, setLeads]);
+
+
+  const handleAddLead = () => {
+        setSelectedLead(null);
+        setShowLeadForm(true);
+    };
+
+    const handleEditLead = (lead: Lead) => {
+        setSelectedLead(lead);
+        setShowLeadForm(true);
+    };
+
+    const handleDeleteLead = async (leadId: string) => {
+    if (window.confirm('Are you sure you want to delete this lead?')) {
+      try {
+        await leadService.deleteLead(leadId);
+        // Optimistically update the UI *after* the backend operation succeeds.
+        setLeads(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
+        toast.success('Lead deleted!');
+      } catch (error) {
+        console.error("Failed to delete lead:", error);
+        toast.error('Failed to delete lead.');
+        // Consider re-fetching leads if the optimistic update fails
+        // fetchLeads();
+      }
     }
   };
 
 
+    const handleSaveLead = useCallback((updatedLead: Lead) => {
+      if (selectedLead) {
+        // Update existing lead in the list
+        setLeads(prevLeads =>
+          prevLeads.map(lead =>
+            lead.id === updatedLead.id ? updatedLead : lead
+          )
+        );
+      } else {
+        // Add new lead to the list
+        setLeads(prevLeads => [...prevLeads, updatedLead]);
+      }
+    }, [selectedLead, setLeads]);
+
+
+    const filteredLeads = leads.filter(lead =>
+      lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (lead.email && lead.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      lead.phone_number.includes(searchQuery)
+    );
+
     return (
-        <div className={`p-8 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
-            <h2 className={`text-2xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Leads</h2>
-            <div className="flex justify-between items-center mb-4">
-                <div className="relative">
-                    <Search className="absolute left-3 top-3 h-5 w-5 text-gray-500" />
-                    <input
-                        type="text"
-                        placeholder="Search leads..."
-                        className={`pl-10 pr-4 py-2 w-64 rounded-md ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'} border focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                <div className="flex gap-2">
-                     <button
-                        onClick={() => setShowImportModal(true)}
-                        className={`flex items-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors`}
-                    >
-                        <FileUp className="mr-2 h-4 w-4" />
-                        Import
-                    </button>
+        <>
+            <div className="flex justify-between items-center mb-6">
+                <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Leads</h2>
+                <div className="flex gap-4">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Search leads..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className={`pl-10 pr-4 py-2 ${
+                                theme === 'dark'
+                                    ? 'bg-gray-700 border-gray-600 text-white'
+                                    : 'bg-gray-50 border-gray-300 text-gray-900'
+                            } border rounded-lg w-64 placeholder-gray-400 focus:outline-none focus:border-indigo-500`}
+                        />
+                        <Search className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
+                    </div>
+
                     <button
-                        onClick={handleExportLeads}
-                        className={`flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors`}
+                        onClick={handleAddLead}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                     >
-                         <FileDown className="mr-2 h-4 w-4" />
-                        Export
-                    </button>
-                    <button
-                        onClick={() => setShowAddLeadModal(true)}
-                        className={`flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors`}
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Lead
+                        <Plus className="w-4 h-4" />
+                        <span>Add Lead</span>
                     </button>
                 </div>
             </div>
 
-             {/* Leads Table */}
-            <div className="overflow-x-auto">
-                <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-300'}`}>
-                    <thead className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
+            {/* Leads Table */}
+            <div className={`overflow-x-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} rounded-lg shadow-md`}>
+                <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                    <thead className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
                         <tr>
-                            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
-                                <button onClick={() => {
-                                    setSortField('name');
-                                    setSortDirection(sortField === 'name' && sortDirection === 'asc' ? 'desc' : 'asc');
-                                }} className="flex items-center">
-                                    Name
-                                    {sortField === 'name' && (sortDirection === 'asc' ? '▲' : '▼')}
-                                </button>
-                            </th>
-                            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Email</th>
-                            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Phone</th>
-                            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Company</th>
-                           <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Status</th>
-                             <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
-                                <button onClick={() => {
-                                     setSortField('created_at');
-                                     setSortDirection(sortField === 'created_at' && sortDirection === 'asc' ? 'desc' : 'asc')
-                                }} className="flex items-center">
-                                Created At
-                                {sortField === 'created_at' && (sortDirection === 'asc' ? '▲' : '▼')}
-                                </button>
-                            </th>
-                            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>Actions</th>
+                            <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} uppercase tracking-wider`}>Name</th>
+                            <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} uppercase tracking-wider`}>Email</th>
+                            <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} uppercase tracking-wider`}>Phone</th>
+                            <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} uppercase tracking-wider`}>Company</th>
+                            <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} uppercase tracking-wider`}>Status</th>
+                            <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} uppercase tracking-wider`}>Actions</th>
                         </tr>
                     </thead>
-                    <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
-                        {filteredLeads.map(lead => (
-                            <tr key={lead.id}>
-                                <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                    <div className="flex items-center">
-                                        <User className="mr-2 h-4 w-4 text-gray-500" />
-                                        {lead.name}
-                                    </div>
-                                </td>
-                                <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                      <div className="flex items-center">
-                                        <Mail className="mr-2 h-4 w-4 text-gray-500" />
-                                        {lead.email}
-                                      </div>
-                                    </td>
-                                <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                      <div className="flex items-center">
-                                        <Phone className="mr-2 h-4 w-4 text-gray-500" />
-                                        {lead.phone_number}
-                                      </div>
-                                    </td>
-                                 <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                    <div className="flex items-center">
-                                        <Building className="mr-2 h-4 w-4 text-gray-500" />
-                                        {lead.company}
-                                      </div>
-                                    </td>
-                                <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{lead.status}</td>
-                                 <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                  {format(new Date(lead.created_at), 'yyyy-MM-dd')}
-                                </td>
-                                <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                   <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => {
-                                            setEditLeadData(lead);
-                                            setShowEditLeadModal(true);
-                                        }}
-                                        className="text-blue-500 hover:text-blue-700"
-                                    >
-                                        <Edit className="h-4 w-4" />
+                    <tbody className={`${theme === 'dark' ? 'text-white' : 'text-gray-800'} divide-y divide-gray-200`}>
+                        {filteredLeads.map((lead) => (
+                            <tr key={lead.id} className={`${theme === 'dark' ? 'hover:bg-gray-700/50':'hover:bg-gray-50'} transition-colors`}>
+                                <td className="px-6 py-4 whitespace-nowrap">{lead.name}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{lead.email}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{lead.phone_number}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{lead.company}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{lead.status}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <button onClick={() => handleEditLead(lead)} className="text-blue-500 hover:text-blue-700 mr-2">
+                                        <Edit className='h-4 w-4'/>
                                     </button>
-                                    <button
-                                         onClick={() => {
-                                            setLeadToDelete(lead.id);
-                                            setShowDeleteConfirmation(true);
-                                          }}
-                                        className="text-red-500 hover:text-red-700"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
+                                    <button onClick={() => handleDeleteLead(lead.id)} className="text-red-500 hover:text-red-700">
+                                        <Trash2 className='h-4 w-4'/>
                                     </button>
-                                    </div>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
-             {/* Add Lead Modal */}
-            {showAddLeadModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className={`rounded-lg shadow-xl p-6 w-full max-w-md ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Add Lead</h3>
-                            <button onClick={() => setShowAddLeadModal(false)} className="text-gray-400 hover:text-gray-500">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="space-y-4">
-                            <div>
-                                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Name</label>
-                                <input
-                                    type="text"
-                                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={newLead.name}
-                                    onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Email</label>
-                                <input
-                                    type="email"
-                                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={newLead.email}
-                                    onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Phone</label>
-                                <input
-                                    type="tel"
-                                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={newLead.phone_number}
-                                    onChange={(e) => setNewLead({ ...newLead, phone_number: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Company</label>
-                                <input
-                                    type="text"
-                                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={newLead.company}
-                                    onChange={(e) => setNewLead({ ...newLead, company: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Website</label>
-                                <input
-                                    type="url"
-                                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={newLead.website}
-                                    onChange={(e) => setNewLead({ ...newLead, website: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Status</label>
-                                <select
-                                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={newLead.status}
-                                    onChange={(e) => setNewLead({ ...newLead, status: e.target.value })}
-                                >
-                                    <option value="new">New</option>
-                                    <option value="contacted">Contacted</option>
-                                    <option value="qualified">Qualified</option>
-                                    <option value="converted">Converted</option>
-                                    <option value="lost">Lost</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Notes</label>
-                                <textarea
-                                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={newLead.notes}
-                                    onChange={(e) => setNewLead({ ...newLead, notes: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                        <div className="flex justify-end mt-6 gap-3">
-                            <button
-                                onClick={() => setShowAddLeadModal(false)}
-                                className={`px-4 py-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} text-gray-600 rounded-lg transition-colors`}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleAddLead}
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                            >
-                                Add Lead
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
-              {/* Edit Lead Modal */}
-            {showEditLeadModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className={`rounded-lg shadow-xl p-6 w-full max-w-md ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Edit Lead</h3>
-                            <button onClick={() => setShowEditLeadModal(false)} className="text-gray-400 hover:text-gray-500">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="space-y-4">
-                            <div>
-                                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Name</label>
-                                <input
-                                    type="text"
-                                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={editLeadData.name}
-                                    onChange={(e) => setEditLeadData({ ...editLeadData, name: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Email</label>
-                                <input
-                                    type="email"
-                                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={editLeadData.email}
-                                    onChange={(e) => setEditLeadData({ ...editLeadData, email: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Phone</label>
-                                <input
-                                    type="tel"
-                                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={editLeadData.phone_number}
-                                    onChange={(e) => setEditLeadData({ ...editLeadData, phone_number: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Company</label>
-                                <input
-                                    type="text"
-                                     className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={editLeadData.company}
-                                    onChange={(e) => setEditLeadData({ ...editLeadData, company: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Website</label>
-                                <input
-                                    type="url"
-                                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={editLeadData.website}
-                                    onChange={(e) => setEditLeadData({ ...editLeadData, website: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                 <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Status</label>
-                                <select
-                                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={editLeadData.status}
-                                    onChange={(e) => setEditLeadData({ ...editLeadData, status: e.target.value })}
-                                >
-                                    <option value="new">New</option>
-                                    <option value="contacted">Contacted</option>
-                                    <option value="qualified">Qualified</option>
-                                    <option value="converted">Converted</option>
-                                    <option value="lost">Lost</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Notes</label>
-                                <textarea
-                                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                                    value={editLeadData.notes}
-                                    onChange={(e) => setEditLeadData({ ...editLeadData, notes: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                        <div className="flex justify-end mt-6 gap-3">
-                            <button
-                                onClick={() => setShowEditLeadModal(false)}
-                                className={`px-4 py-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} text-gray-600 rounded-lg transition-colors`}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleEditLead}
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                            >
-                                Save Changes
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-             {/* Delete Confirmation Modal */}
-            {showDeleteConfirmation && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className={`rounded-lg shadow-xl p-6 w-full max-w-md ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Confirm Delete</h3>
-                            <button onClick={() => setShowDeleteConfirmation(false)} className="text-gray-400 hover:text-gray-500">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <p className={`mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>Are you sure you want to delete this lead?</p>
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => setShowDeleteConfirmation(false)}
-                                className={`px-4 py-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} text-gray-600 rounded-lg transition-colors`}
-
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                 onClick={() => leadToDelete && handleDeleteLead(leadToDelete)}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {/* Import Modal */}
-            {showImportModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                <div className={`rounded-lg shadow-xl p-6 w-full max-w-md ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Import Leads</h3>
-                        <button onClick={() => setShowImportModal(false)} className="text-gray-400 hover:text-gray-500">
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
-                    <div className="space-y-4">
-                        <div>
-                            <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Select CSV File</label>
-                            <input
-                                type="file"
-                                accept=".csv"
-                                onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)}
-                                className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                            />
-                        </div>
-                        {importError && (
-                            <div className="flex items-center p-2 bg-red-100 border border-red-400 text-red-700 rounded">
-                              <AlertTriangle className="mr-2 h-4 w-4" />
-                              {importError}
-                            </div>
-                          )}
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => setShowImportModal(false)}
-                                className={`px-4 py-2 ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} text-gray-600 rounded-lg transition-colors`}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleImportLeads}
-                                disabled={!selectedFile}
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-                            >
-                                Import
-                            </button>
-                        </div>
-                    </div>
-                </div>
+              {/* Add Lead Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl p-6 w-full max-w-md`}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Add New Lead</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-500">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-        </div>
-    );
-};
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Name</label>
+                <input
+                    type="text"
+                    value={newLead.name}
+                    onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
+                    className={`w-full px-3 py-2 ${
+                        theme === 'dark'
+                            ? 'bg-gray-700 border-gray-600 text-white'
+                            : 'bg-gray-50 border-gray-300 text-gray-900'
+                    } border rounded-lg focus:outline-none focus:border-indigo-500`}
+                />
+            </div>
 
-export default LeadsView;
+            <div>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Email</label>
+                <input
+                    type="email"
+                    value={newLead.email || ''}
+                    onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
+                    className={`w-full px-3 py-2 ${
+                        theme === 'dark'
+                            ? 'bg-gray-700 border-gray-600 text-white'
+                            : 'bg-gray-50 border-gray-300 text-gray-900'
+                    } border rounded-lg focus:outline-none focus:border-indigo-500`}
+                />
+            </div>
+
+            <div>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Phone</label>
+                <input
+                    type="tel"
+                    value={newLead.phone_number}
+                    onChange={(e) => setNewLead({ ...newLead, phone_number: e.target.value })}
+                    className={`w-full px-3 py-2 ${
+                        theme === 'dark'
+                            ? 'bg-gray-700 border-gray-600 text-white'
+                            : 'bg-gray-50 border-gray-300 text-gray-900'
+                    } border rounded-lg focus:outline-none focus:border-indigo-500`}
+                />
+            </div>
+
+            <div>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Company</label>
+                <input
+                    type="text"
+                    value={newLead.company}
+                    onChange={(e) => setNewLead({ ...newLead, company: e.target.value })}
+                    className={`w-full px-3 py-2 ${
+                        theme === 'dark'
+                        ? 'bg-gray-700 border-gray-600 text-white'
+                        : 'bg-gray-50 border-gray-300 text-gray-900'
+                  } border rounded-lg focus:outline-none focus:border-indigo-500`}
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Website</label>
+                <input
+                    type="url"
+                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
+                    value={newLead.website}
+                    onChange={(e) => setNewLead({ ...newLead, website: e.target.value })}
+                />
+            </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Status</label>
+                <select
+                  value={newLead.status}
+                  onChange={(e) => setNewLead({ ...newLead, status: e.target.value as Lead['status'] })}
+                  className={`w-full px-3 py-2 ${
+                    theme === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-gray-50 border-gray-300 text-gray-900'
+                  } border rounded-lg focus:outline-none focus:border-indigo-500`}
+                >
+                  <option value="New">New</option>
+                  <option value="Cold">Cold</option>
+                  <option value="Warm">Warm</option>
+                  <option value="Hot">Hot</option>
+                </select>
+              </div>
+              <div>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Source</label>
+                <select
+                  value={newLead.source}
+                  onChange={(e) => setNewLead({ ...newLead, source: e.target.value})}
+                  className={`w-full px-3 py-2 ${
+                    theme === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-gray-50 border-gray-300 text-gray-900'
+                  } border rounded-lg focus:outline-none focus:border-indigo-500`}
+                >
+                  <option value="">Select Source</option>
+                  <option value="Website">Website</option>
+                  <option value="WhatsApp">WhatsApp</option>
+                  <option value="SMS">SMS</option>
+                  <option value="Email">Email</option>
+                  <option value="Phone Call">Phone Call</option>
+                  <option value="Manual">Manual</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Industry</label>
+                <input
+                  type="text"
+                  value={newLead.industry || ''}
+                  onChange={(e) => setNewLead({ ...newLead, industry: e.target.value })}
+                  className={`w-full px-3 py-2 ${
+                    theme === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-gray-50 border-gray-300 text-gray-900'
+                  } border rounded-lg focus:outline-none focus:border-indigo-500`}
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-1`}>Region</label>
+                <input
+                  type="text"
+                  value={newLead.region || ''}
+                  onChange={(e) => setNewLead({ ...newLead, region: e.target.value })}
+                  className={`w-full px-3 py-2 ${
+                    theme === 'dark'
+                      ? 'bg-gray-700 border-gray-600 text-white'
+                      : 'bg-gray-50 border-gray-300 text-gray-900'
+                  } border rounded-lg focus:outline-none focus:border-indigo-500`}
+                />
+              </div>
+               <div>
+                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Notes</label>
+                    <textarea
+                        className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500`}
+                        value={newLead.notes}
+                        onChange={(e) => setNewLead({ ...newLead, notes: e.target.value })}
+                    />
+                </div>
+
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowAddLeadModal(false)}
+                className={`px-4 py-2 ${
+                  theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
+                } text-gray-400 rounded-lg transition-colors`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddLead}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                Add Lead
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+        </>
+    )
+}

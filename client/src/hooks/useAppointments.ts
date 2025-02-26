@@ -1,6 +1,6 @@
 // src/hooks/useAppointments.ts
 import { useState, useEffect, useCallback } from 'react';
-import * as calendarService from '../services/calendarService';
+import * as appointmentService from '../services/appointmentService';
 import { Appointment } from '../models/Appointment';
 import { useApp } from '../contexts/AppContext';
 
@@ -8,12 +8,12 @@ export const useAppointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-    const { socket } = useApp(); // Access the socket from the context
+    const { socket } = useApp();
 
   const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await calendarService.getAllAppointments();
+      const data = await appointmentService.getAllAppointments();
       setAppointments(data);
       setError(null);
     } catch (err: any) {
@@ -28,7 +28,7 @@ export const useAppointments = () => {
   }, [fetchAppointments]);
 
     useEffect(() => {
-        if(!socket) return; // Don't do anything if socket isn't set up yet
+        if(!socket) return;
         socket.on('appointment_created', (newAppointment: Appointment) => {
             setAppointments(prevAppointments => [...prevAppointments, newAppointment]);
         });
@@ -46,13 +46,15 @@ export const useAppointments = () => {
              prevAppointments.filter((appointment) => appointment.id !== deletedAppointmentId)
            );
         });
-        return () => {
-          socket.off('appointment_created');
-          socket.off('appointment_updated');
-          socket.off('appointment_deleted');
-        }
 
-    }, [socket]) // Depend on socket
+        return () => {
+          if(socket){
+            socket.off('appointment_created');
+            socket.off('appointment_updated');
+            socket.off('appointment_deleted');
+          }
+        };
+    }, [socket, setAppointments]);
 
   return { appointments, loading, error, refetch: fetchAppointments };
 };

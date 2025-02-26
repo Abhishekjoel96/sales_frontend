@@ -17,6 +17,7 @@ import { Users, PhoneCall, TrendingUp, Mail, Calendar, Clock, MessageSquare } fr
 import * as analyticsService from '../services/analyticsService'; // Import analytics service
 import { AnimatedCard } from './shared/AnimatedCard';
 
+
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -37,17 +38,17 @@ interface KPI {
 }
 
 interface AnalyticsData {
-    totalLeads: number;
-    appointmentsBooked: number;
-    conversionRate: number;
-    avgCallDuration: string;
-    totalCalls: number;
-    leadVolume: any; // Replace 'any' with the actual chart data type
-    channelDistribution: any; // Replace 'any' with the actual chart data type
-    conversionRateTrends: any; // Replace 'any' with the actual chart data type
-    leadFunnel: any;          // Replace 'any' with the actual chart data type
-    // Add other metrics as needed
-    [key: string]: any; // Add index signature
+  totalLeads: number;
+  appointmentsBooked: number;
+  conversionRate: number;
+  avgCallDuration: string;
+  totalCalls: number;
+  leadVolume: any; // Replace 'any' with the actual chart data type
+  channelDistribution: any; // Replace 'any' with the actual chart data type
+  conversionRateTrends: any; // Replace 'any' with the actual chart data type
+  leadFunnel: any;          // Replace 'any' with the actual chart data type
+  // Add other metrics as needed
+  [key: string]: any; // Add index signature
 }
 const timeRangeOptions = ['Day', 'Week', 'Month'] as const;
 type TimeRange = typeof timeRangeOptions[number];
@@ -97,7 +98,7 @@ export function AnalyticsView({ theme }: { theme: 'dark' | 'light' }) {
         return <div>Error: {error}</div>;
     }
     if(!analyticsData){
-      return <div>No Data</div>; // Or some other placeholder
+      return <div>No Data...</div>; // Or some other placeholder
     }
 
     const kpis: KPI[] = [

@@ -1,5 +1,4 @@
 // src/hooks/useMessages.ts
-
 import { useState, useEffect, useCallback } from 'react';
 import * as messageService from '../services/messageService';
 import { Message } from '../models/Message';
@@ -9,12 +8,13 @@ export const useMessages = (leadId: string, channel: string) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const {socket} = useApp();
+    const { socket } = useApp();
+
 
     const fetchMessages = useCallback(async () => {
-        if (!leadId || !channel) {
-          return;
-        }
+      if (!leadId || !channel) {
+        return;
+      }
         try {
             setLoading(true);
             const fetchedMessages = await messageService.getMessagesByChannelAndLeadId(leadId, channel);
@@ -31,13 +31,13 @@ export const useMessages = (leadId: string, channel: string) => {
         fetchMessages();
     }, [fetchMessages]);
 
-    useEffect(() => {
+     useEffect(() => {
         if (!socket) return;
 
         const handleMessageReceived = (newMessage: Message) => {
-            if (newMessage.channel === channel && newMessage.lead_id === leadId) {
-                setMessages(prevMessages => [...prevMessages, newMessage]);
-            }
+          if (newMessage.channel === channel && newMessage.lead_id === leadId) {
+            setMessages((prevMessages) => [...prevMessages, newMessage]);
+          }
         };
 
         socket.on('message_received', handleMessageReceived);
@@ -45,7 +45,8 @@ export const useMessages = (leadId: string, channel: string) => {
         return () => {
             socket.off('message_received', handleMessageReceived);
         };
-    }, [socket, leadId, channel, setMessages]); // Correct dependencies
+    }, [socket, leadId, channel, setMessages]);
+
 
     return { messages, loading, error, refetch: fetchMessages };
 };

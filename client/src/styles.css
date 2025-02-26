@@ -28,3 +28,61 @@ body {
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* Tailwind default sans-serif stack */
 }
+
+/* Custom scrollbar styles (optional, but recommended for better aesthetics) */
+/* For WebKit browsers (Chrome, Safari) */
+::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+  height: 8px; /* Height of the scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background); /* Color of the track */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--border); /* Color of the scroll thumb */
+  border-radius: 9999px;       /* Round the corners of the thumb */
+  border: 2px solid var(--background); /* Creates padding around the thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--border) 50%,  #000000);
+}
+
+
+/* Make the 'prose' class from Tailwind Typography work with dark mode */
+.prose {
+  --tw-prose-body: var(--text-light); /* Default text color */
+  --tw-prose-headings: var(--text-light); /* Default heading color */
+  --tw-prose-links: #3b82f6; /* Default link color */
+  --tw-prose-bold: var(--text-light); /* Default bold color */
+  --tw-prose-counters: var(--text-light);
+  --tw-prose-bullets: var(--text-light);
+  --tw-prose-hr: var(--border-light); /* Default hr color */
+  --tw-prose-quotes: var(--text-light); /* Default quote color */
+  --tw-prose-quote-borders: var(--border-light);
+  --tw-prose-captions: var(--text-light);
+  --tw-prose-code: var(--text-light); /* Default inline code color */
+  --tw-prose-pre-code: var(--text-light); /* Default code block text color */
+  --tw-prose-pre-bg: var(--background-light);  /*Default code block bg color*/
+  --tw-prose-th-borders: var(--border-light);
+  --tw-prose-td-borders: var(--border-light);
+}
+.dark .prose {
+  --tw-prose-body: var(--text-dark);
+  --tw-prose-headings: var(--text-dark);
+  --tw-prose-links: #93c5fd;
+  --tw-prose-bold: var(--text-dark);
+  --tw-prose-counters: var(--text-dark);
+  --tw-prose-bullets: var(--text-dark);
+  --tw-prose-hr: var(--border-dark);
+  --tw-prose-quotes: var(--text-dark);
+  --tw-prose-quote-borders: var(--border-dark);
+  --tw-prose-captions: var(--text-dark);
+  --tw-prose-code: var(--text-dark);
+  --tw-prose-pre-code: var(--text-dark);
+  --tw-prose-pre-bg: var(--background-dark);
+  --tw-prose-th-borders: var(--border-dark);
+  --tw-prose-td-borders: var(--border-dark);
+}

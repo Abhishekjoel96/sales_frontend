@@ -1,20 +1,11 @@
 // src/main.tsx
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import ReactDOM from 'react-dom/client';
 import App from './App';
-import './styles.css';
-import { AppProvider } from './contexts/AppContext';
+import './index.css'; // Your global styles
 
-const rootElement = document.getElementById('root');
-
-if (!rootElement) {
-  throw new Error("Failed to find the root element. Make sure your index.html has a div with id='root'");
-}
-
-const root = createRoot(rootElement);
-
-root.render(
-        <AppProvider>
-            <App />
-        </AppProvider>
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+      <App />
+  </React.StrictMode>,
 );

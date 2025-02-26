@@ -1,14 +1,12 @@
 // src/pages/ReportsPage.tsx
 import React from 'react';
-//Corrected path
-import { CallReportView } from '../components/CallReportView'; // Make sure this path is correct
+import { CallReportView } from '../components/CallReportView';
 import { useApp } from '../contexts/AppContext';
 
-
 const ReportsPage = () => {
-    const { theme, leads, callLogs } = useApp(); // Get required data from context
+    const { theme, leads, callLogs } = useApp(); // Get leads and callLogs from context
     return (
-        <CallReportView theme={theme} callLogs={callLogs} leads={leads} />
+        <CallReportView theme={theme} callLogs={callLogs} leads={leads}/>
 
     );
 };

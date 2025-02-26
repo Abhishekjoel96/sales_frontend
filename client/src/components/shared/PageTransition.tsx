@@ -4,20 +4,43 @@ import { motion } from 'framer-motion';
 
 interface PageTransitionProps {
     children: React.ReactNode;
-    key: string | number; // Add key prop
+    key: string | number;
 }
 
-// Use a wrapper component
-export function PageTransition({ children, key }: PageTransitionProps) {
+export const PageTransition: React.FC<PageTransitionProps> = ({ children, key }) => {
+
+    const variants = {
+        initial: {
+            opacity: 0,
+            y: 20,
+        },
+        animate: {
+            opacity: 1,
+            y: 0,
+            transition: {
+                duration: 0.5,
+                ease: 'easeOut',
+            },
+        },
+        exit: {
+            opacity: 0,
+            y: -20,
+            transition: {
+                duration: 0.3,
+                ease: 'easeIn',
+            },
+        }
+    }
+
     return (
         <motion.div
-            key={key} // Use key prop here
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.2 }}
+            key={key}
+            variants={variants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
         >
             {children}
         </motion.div>
-    );
+    )
 }

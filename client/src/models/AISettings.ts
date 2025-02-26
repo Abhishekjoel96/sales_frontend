@@ -1,5 +1,4 @@
 // src/models/AISettings.ts
-
 export interface AISettings {
     id: string;
     channel: 'WhatsApp' | 'SMS' | 'Email' | 'Call';

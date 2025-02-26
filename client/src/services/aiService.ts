@@ -1,12 +1,27 @@
 // src/services/aiService.ts
 import api from '../config/api';
+import { AISettings } from '../models/AISettings';
 
-export const getRagData = async(query: string): Promise<string> => {
-    const response = await api.post('/ai/assistant', {query});
-    return response.data.response; // Assuming backend returns { response: string }
-}
+export const getAISettings = async (): Promise<AISettings> => {
+  const response = await api.get('/ai/settings');
+  return response.data;
+};
 
-export const getDashboardData = async(): Promise<any> => { // Replace 'any' with a proper interface
-  const response = await api.get('/ai/dashboard');
+export const updateAISettings = async (settings: AISettings): Promise<AISettings> => {
+    const response = await api.put('/ai/settings', settings);
+    return response.data;
+};
+
+export const getAvailableModels = async (): Promise<string[]> => {
+    const response = await api.get('/ai/models');
+    return response.data;
+};
+
+export const getChannelPrompts = async (): Promise<{ [key: string]: string }> => {
+  const response = await api.get('/ai/channel-prompts');
   return response.data;
 }
+
+export const updateChannelPrompt = async (channel: string, prompt: string): Promise<void> => {
+    await api.put(`/ai/channel-prompts/${channel}`, { prompt });
+};

@@ -8,7 +8,8 @@ export const useCalls = () => {
     const [calls, setCalls] = useState<CallLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const {socket} = useApp();
+     const { socket } = useApp(); // Access the socket from the context
+
 
     const fetchCalls = useCallback(async () => {
         try {
@@ -26,7 +27,8 @@ export const useCalls = () => {
     useEffect(() => {
         fetchCalls();
     }, [fetchCalls]);
-    useEffect(() => {
+
+     useEffect(() => {
         if(!socket) return;
         socket.on('call_initiated', (newCall: CallLog) => {
             setCalls(prevCalls => [newCall, ...prevCalls]);
@@ -39,7 +41,7 @@ export const useCalls = () => {
             );
         });
 
-         socket.on('call_transcribed', (updatedCall: CallLog) => {
+         socket.on('call_transcribed', (updatedCall: CallLog) => {  // Assuming you send back the full updated CallLog
              setCalls(prevCalls =>
                prevCalls.map((call) =>
                  call.id === updatedCall.id ? updatedCall: call
@@ -49,11 +51,13 @@ export const useCalls = () => {
 
 
         return () => {
+          if(socket){
             socket.off('call_initiated')
             socket.off('call_updated')
             socket.off('call_transcribed')
+          }
         };
-    }, [socket]); // Correct Dependency
+    }, [socket, setCalls]); // Add setCalls to the dependency array
 
     return { calls, loading, error, refetch: fetchCalls };
 };

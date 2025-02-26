@@ -8,8 +8,9 @@ import { Message } from '../models/Message';
 import { AISettings } from '../models/AISettings';
 import * as leadService from '../services/leadService';
 import * as messageService from '../services/messageService';
-import * as calendarService from '../services/calendarService';
+import * as appointmentService from '../services/appointmentService';
 import * as callService from '../services/callService';
+
 
 interface AppContextType {
     leads: Lead[];
@@ -27,16 +28,18 @@ interface AppContextType {
     setTheme: React.Dispatch<React.SetStateAction<'dark' | 'light'>>;
     aiSettings: AISettings[];
     setAiSettings: React.Dispatch<React.SetStateAction<AISettings[]>>;
-    fetchData: () => Promise<void>; // Add this
+    fetchData: () => Promise<void>; //For Refetching
+    selectedLead: { name: string; phone: string; id: string } | null; // Add selectedLead
+    selectLead: (leadId: string) => void; // Add selectLead
 }
 
-export const AppContext = createContext<AppContextType | undefined>(undefined); // Corrected export
+export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 interface AppProviderProps {
     children: ReactNode;
 }
 
-export function AppProvider({ children }: AppProviderProps) {  //Corrected export
+export function AppProvider({ children }: AppProviderProps) {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [callLogs, setCallLogs] = useState<CallLog[]>([]);
@@ -44,15 +47,23 @@ export function AppProvider({ children }: AppProviderProps) {  //Corrected expor
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [socket, setSocket] = useState<Socket | null>(null);
-    const [theme, setTheme] = useState<'dark' | 'light'>('dark'); // Example: Initial theme state
+    const [theme, setTheme] = useState<'dark' | 'light'>('dark'); // Example: Initial theme state, you could also load from localStorage
     const [aiSettings, setAiSettings] = useState<AISettings[]>([]);
+    const [selectedLead, setSelectedLead] = useState<{ name: string; phone: string; id: string } | null>(null);
 
-    // Initial data fetching (example with leads - do the same for appointments, etc.)
+    // Initial data fetching, using useCallback for preventing rerendering.
      const fetchData = useCallback(async () => {
         setIsLoading(true)
         try{
             const fetchedLeads = await leadService.getLeads()
             setLeads(fetchedLeads);
+            const fetchedAppointments = await appointmentService.getAllAppointments();
+            setAppointments(fetchedAppointments);
+            const fetchedCallLogs = await callService.getAllCallLogs();
+            setCallLogs(fetchedCallLogs);
+            // const fetchedMessages = await messageService.getAllMessages(); // Fetch *all* initial messages.
+            // setMessages(fetchedMessages);
+
         }
         catch(error: any){
             setError(error.message || "Failed to fetch the data")
@@ -60,7 +71,7 @@ export function AppProvider({ children }: AppProviderProps) {  //Corrected expor
         finally{
             setIsLoading(false);
         }
-    }, []);
+    }, [setLeads, setAppointments, setCallLogs]);
 
     useEffect(() => {
        fetchData();
@@ -79,7 +90,6 @@ export function AppProvider({ children }: AppProviderProps) {  //Corrected expor
             console.log('Disconnected from WebSocket');
         });
 
-        // Example of handling multiple events.  Add more as needed.
         newSocket.on('message_received', (newMessage: Message) => {
             setMessages(prevMessages => [...prevMessages, newMessage]);
         });
@@ -87,6 +97,7 @@ export function AppProvider({ children }: AppProviderProps) {  //Corrected expor
         newSocket.on('lead_added', (newLead: Lead) => {
             setLeads(prevLeads => [...prevLeads, newLead]);
         });
+
         newSocket.on('lead_updated', (updatedLead: Lead) => {
           setLeads(prevLeads =>
             prevLeads.map((lead) =>
@@ -136,8 +147,7 @@ export function AppProvider({ children }: AppProviderProps) {  //Corrected expor
          });
 
          newSocket.on('dashboard_updated', (dashboardData: any) => { //Not implemented yet
-             // Handle dashboard updates.  This assumes your backend sends *all* dashboard data.
-             // You'd likely have more specific state variables for different parts of the dashboard.
+             // Handle dashboard updates.
          });
 
          newSocket.on('ai_settings_updated', (updatedSettings: AISettings[])=>{
@@ -149,6 +159,16 @@ export function AppProvider({ children }: AppProviderProps) {  //Corrected expor
         };
     }, []); // Empty dependency array: only run once on mount
 
+    //Function for selecting lead
+    const selectLead = (leadId: string) => {
+        const lead = leads.find(l => l.id === leadId);
+        if (lead) {
+            setSelectedLead({ name: lead.name, phone: lead.phone_number, id: lead.id });
+        } else {
+            setSelectedLead(null); // Or handle the case where the lead is not found
+            console.warn(`Lead with ID ${leadId} not found.`);
+        }
+    };
 
     const contextValue: AppContextType = {
         leads,
@@ -166,7 +186,9 @@ export function AppProvider({ children }: AppProviderProps) {  //Corrected expor
         setTheme,
         aiSettings,
         setAiSettings,
-        fetchData
+        fetchData,
+        selectedLead,
+        selectLead
     };
 
     return (

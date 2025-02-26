@@ -5,5 +5,5 @@ export interface Message {
     channel: 'WhatsApp' | 'SMS' | 'Email';
     direction: 'Inbound' | 'Outbound';
     content: string;
-    timestamp: string;
+    timestamp: string; // Use string for ISO 8601 dates
 }

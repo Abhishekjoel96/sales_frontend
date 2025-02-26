@@ -63,8 +63,9 @@ export function SMSView({ theme, leads }: SMSViewProps) {
      const handleSendMessage = async (text: string, leadId: string, channel: string) => {
         try {
             await messageService.sendMessage(leadId, channel, text);
-            // Fetch all the messages.
-            fetchMessages(leadId)
+             //Message is sent successfully, refetch
+              fetchMessages(leadId);
+
         } catch (error: any) {
             console.error("Error sending message:", error);
             setError(error.message || 'Failed to send message');  // Update error state
@@ -169,8 +170,8 @@ export function SMSView({ theme, leads }: SMSViewProps) {
 
             {/* Chat Area */}
             <div className="flex-1">
-                {selectedContact ? (
-                    <Chat contact={selectedContact} messages={messages} onSendMessage={handleSendMessage} theme={theme} />
+                {selectedLead ? (
+                    <Chat contact={selectedLead} messages={messages} onSendMessage={handleSendMessage} theme={theme} />
                 ) : (
                     <div className="flex items-center justify-center h-full">
                         <p className={`text-lg ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -179,8 +180,8 @@ export function SMSView({ theme, leads }: SMSViewProps) {
                     </div>
                 )}
             </div>
-             {/* AI Assistant Popup */}
-             {showAIPopup && (
+            {/* AI Assistant Popup */}
+            {showAIPopup && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-xl p-6 w-full max-w-md`}>
                         <div className="flex justify-between items-center mb-4">

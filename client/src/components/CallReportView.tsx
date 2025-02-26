@@ -8,8 +8,8 @@ interface CallReportViewProps {
   callLogs: CallLog[];
   leads: Lead[];
 }
+export function CallReportView({ theme, callLogs, leads }: CallReportViewProps) {
 
-const CallReportView: React.FC<CallReportViewProps> = ({ theme, callLogs, leads }) => {
   // Function to get Lead name by ID
   const getLeadName = (leadId: string) => {
     const lead = leads.find(lead => lead.id === leadId);
@@ -27,7 +27,7 @@ const CallReportView: React.FC<CallReportViewProps> = ({ theme, callLogs, leads 
         <p>No call reports available.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className={`min-w-full divide-y divide-gray-200 ${theme === 'dark' ? 'divide-gray-700' : ''}`}>
+          <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700': 'divide-gray-200'}`}>
             <thead className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
               <tr>
                 <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300 uppercase' : 'text-gray-500 uppercase'} tracking-wider`}>
@@ -54,7 +54,7 @@ const CallReportView: React.FC<CallReportViewProps> = ({ theme, callLogs, leads 
 
               </tr>
             </thead>
-            <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
+            <tbody className={`${theme === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-y divide-gray-200'}`}>
               {callLogs.map((log) => (
                 <tr key={log.id} className={`${theme === 'dark' ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'}`}>
                   <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
@@ -73,6 +73,7 @@ const CallReportView: React.FC<CallReportViewProps> = ({ theme, callLogs, leads 
                     {log.status}
                   </td>
                   <td className="px-6 py-4">
+                    {/* Display transcription (consider adding a modal for longer transcripts) */}
                     {log.transcription ? (
                       <details>
                         <summary>Show Transcription</summary>
@@ -99,5 +100,3 @@ const CallReportView: React.FC<CallReportViewProps> = ({ theme, callLogs, leads 
     </div>
   );
 };
-
-export {CallReportView}
